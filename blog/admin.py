@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from .models import Category, Subcategory, Post, Comment
+from .models import Category, Subcategory, Post, Comment, CommentVote, PostReaction, Notification, Mention
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -223,3 +223,37 @@ class UserAdmin(BaseUserAdmin):
 # Re-registrar el modelo User con nuestro admin personalizado
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ['sender', 'recipient', 'notification_type', 'title', 'is_read', 'created_at']
+    list_filter = ['notification_type', 'is_read', 'created_at']
+    search_fields = ['sender__username', 'recipient__username', 'title', 'message']
+    ordering = ['-created_at']
+    date_hierarchy = 'created_at'
+    
+    actions = ['mark_as_read', 'mark_as_unread']
+    
+    def mark_as_read(self, request, queryset):
+        count = queryset.update(is_read=True)
+        self.message_user(request, f'{count} notificaciones marcadas como leídas.')
+    mark_as_read.short_description = 'Marcar como leídas'
+    
+    def mark_as_unread(self, request, queryset):
+        count = queryset.update(is_read=False)
+        self.message_user(request, f'{count} notificaciones marcadas como no leídas.')
+    mark_as_unread.short_description = 'Marcar como no leídas'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('sender', 'recipient', 'post', 'comment')
+
+@admin.register(Mention)
+class MentionAdmin(admin.ModelAdmin):
+    list_display = ['comment', 'mentioned_user', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['comment__author__username', 'mentioned_user__username', 'comment__content']
+    ordering = ['-created_at']
+    date_hierarchy = 'created_at'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('comment__author', 'mentioned_user')

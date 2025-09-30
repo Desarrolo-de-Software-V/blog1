@@ -31,6 +31,13 @@ urlpatterns = [
     path('toggle-reaction/<slug:post_slug>/', views.toggle_reaction, name='toggle_reaction'),
     path('toggle-comment-vote/<int:comment_id>/', views.toggle_comment_vote, name='toggle_comment_vote'),
     
+    # Notificaciones
+    path('notifications/', views.notifications_list, name='notifications'),
+    path('notifications/mark-read/<int:notification_id>/', views.mark_notification_read, name='mark_notification_read'),
+    path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('notifications/count/', views.get_notifications_count, name='get_notifications_count'),
+    path('notifications/recent/', views.get_recent_notifications, name='get_recent_notifications'),
+    
     # Registro
     path('register/', views.register, name='register'),
     

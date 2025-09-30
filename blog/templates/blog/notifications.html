@@ -1,0 +1,365 @@
+{% extends 'base.html' %}
+{% load blog_extras %}
+
+{% block title %}Notificaciones - MovieReviews{% endblock %}
+
+{% block extra_css %}
+<style>
+.notification-item {
+    background: white;
+    border-left: 4px solid #007bff;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 0 10px 10px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.notification-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.notification-item.unread {
+    background: #f8f9ff;
+    border-left-color: #ff6b6b;
+    font-weight: 600;
+}
+
+.notification-item.read {
+    opacity: 0.7;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.notification-type {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.notification-type.mention {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.notification-type.like {
+    background: #fce4ec;
+    color: #c2185b;
+}
+
+.notification-type.comment {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.notification-type.reply {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.notification-time {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.notification-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.mark-read-btn {
+    background: none;
+    border: 1px solid #ddd;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mark-read-btn:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    color: #ddd;
+}
+
+.notification-badge {
+    position: relative;
+}
+
+.notification-badge .badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ff4757;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>
+                    Notificaciones
+                </h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="markAllAsRead()">
+                        <i class="fas fa-check-double me-1"></i>
+                        Marcar todas como leídas
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="refreshNotifications()">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">{{ unread_count }}</h5>
+                            <p class="card-text">No leídas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">{{ page_obj.paginator.count }}</h5>
+                            <p class="card-text">Total</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">{{ page_obj.paginator.count|add:"-"|add:unread_count }}</h5>
+                            <p class="card-text">Leídas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications List -->
+            {% if notifications %}
+                {% for notification in notifications %}
+                <div class="notification-item {% if not notification.is_read %}unread{% else %}read{% endif %}" 
+                     data-notification-id="{{ notification.id }}"
+                     onclick="openNotification('{{ notification.get_absolute_url }}', {{ notification.id }})">
+                    
+                    <div class="notification-header">
+                        <div class="d-flex align-items-center">
+                            <span class="notification-type {{ notification.notification_type }}">
+                                {% if notification.notification_type == 'mention' %}
+                                    <i class="fas fa-at me-1"></i>Mención
+                                {% elif notification.notification_type == 'like' %}
+                                    <i class="fas fa-heart me-1"></i>Me gusta
+                                {% elif notification.notification_type == 'comment' %}
+                                    <i class="fas fa-comment me-1"></i>Comentario
+                                {% elif notification.notification_type == 'reply' %}
+                                    <i class="fas fa-reply me-1"></i>Respuesta
+                                {% endif %}
+                            </span>
+                            {% if not notification.is_read %}
+                            <span class="badge bg-danger ms-2">Nuevo</span>
+                            {% endif %}
+                        </div>
+                        <small class="notification-time">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ notification.created_at|timesince }} atrás
+                        </small>
+                    </div>
+                    
+                    <h6 class="mb-2">{{ notification.title }}</h6>
+                    <p class="mb-3 text-muted">{{ notification.message }}</p>
+                    
+                    <div class="notification-actions">
+                        <button class="mark-read-btn" onclick="event.stopPropagation(); markAsRead({{ notification.id }})">
+                            <i class="fas fa-check me-1"></i>
+                            {% if notification.is_read %}Marcada{% else %}Marcar como leída{% endif %}
+                        </button>
+                        <a href="{{ notification.get_absolute_url }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            Ver
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Paginación de notificaciones">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">Primera</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-bell-slash"></i>
+                    <h4>No tienes notificaciones</h4>
+                    <p>Cuando alguien te mencione o interactúe con tu contenido, aparecerá aquí.</p>
+                    <a href="{% url 'blog:post_list' %}" class="btn btn-primary">
+                        <i class="fas fa-film me-2"></i>
+                        Explorar reseñas
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function markAsRead(notificationId) {
+    fetch(`/notifications/mark-read/${notificationId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+            notificationElement.classList.remove('unread');
+            notificationElement.classList.add('read');
+            
+            const badge = notificationElement.querySelector('.badge.bg-danger');
+            if (badge) {
+                badge.remove();
+            }
+            
+            const markBtn = notificationElement.querySelector('.mark-read-btn');
+            markBtn.innerHTML = '<i class="fas fa-check me-1"></i>Marcada';
+            
+            updateNotificationCount();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function markAllAsRead() {
+    fetch('/notifications/mark-all-read/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
+                item.classList.add('read');
+                const badge = item.querySelector('.badge.bg-danger');
+                if (badge) {
+                    badge.remove();
+                }
+                const markBtn = item.querySelector('.mark-read-btn');
+                markBtn.innerHTML = '<i class="fas fa-check me-1"></i>Marcada';
+            });
+            
+            updateNotificationCount();
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function openNotification(url, notificationId) {
+    // Marcar como leída si no lo está
+    const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+    if (notificationElement.classList.contains('unread')) {
+        markAsRead(notificationId);
+    }
+    
+    // Abrir la URL
+    window.location.href = url;
+}
+
+function refreshNotifications() {
+    location.reload();
+}
+
+function updateNotificationCount() {
+    fetch('/notifications/count/')
+    .then(response => response.json())
+    .then(data => {
+        const badge = document.querySelector('.notification-badge .badge');
+        if (badge) {
+            if (data.unread_count > 0) {
+                badge.textContent = data.unread_count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Actualizar contador cada 30 segundos
+setInterval(updateNotificationCount, 30000);
+</script>
+{% endblock %}

@@ -193,6 +193,53 @@ class Comment(models.Model):
         if not user.is_authenticated:
             return False
         return self.votes.filter(user=user).exists()
+    
+    def detect_mentions(self):
+        """Detecta menciones (@usuario) en el contenido del comentario"""
+        import re
+        from django.contrib.auth.models import User
+        
+        # Patrón para detectar @usuario
+        mention_pattern = r'@(\w+)'
+        mentions = re.findall(mention_pattern, self.content)
+        
+        mentioned_users = []
+        for username in mentions:
+            try:
+                user = User.objects.get(username=username)
+                if user != self.author:  # No mencionarse a sí mismo
+                    mentioned_users.append(user)
+            except User.DoesNotExist:
+                # Usuario no existe, ignorar
+                pass
+        
+        return mentioned_users
+    
+    def process_mentions(self):
+        """Procesa las menciones y crea notificaciones"""
+        mentioned_users = self.detect_mentions()
+        
+        for user in mentioned_users:
+            # Crear notificación usando get_model para evitar importación circular
+            from django.apps import apps
+            Notification = apps.get_model('blog', 'Notification')
+            Mention = apps.get_model('blog', 'Mention')
+            
+            Notification.objects.create(
+                recipient=user,
+                sender=self.author,
+                notification_type='mention',
+                title=f'{self.author.get_full_name() or self.author.username} te mencionó',
+                message=f'Te mencionó en un comentario: "{self.content[:100]}..."',
+                post=self.post,
+                comment=self
+            )
+            
+            # Crear registro de mención
+            Mention.objects.get_or_create(
+                comment=self,
+                mentioned_user=user
+            )
 
 class CommentVote(models.Model):
     """Modelo para manejar votos de comentarios"""
@@ -235,3 +282,54 @@ class PostReaction(models.Model):
     
     def __str__(self):
         return f"{self.user.username} reaccionó con {self.get_reaction_type_display()} a {self.post.title}"
+
+class Notification(models.Model):
+    """Modelo para notificaciones del sistema"""
+    NOTIFICATION_TYPES = [
+        ('mention', 'Mencionado'),
+        ('like', 'Me gusta'),
+        ('comment', 'Comentario'),
+        ('reply', 'Respuesta'),
+    ]
+    
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['recipient', 'is_read']),
+            models.Index(fields=['created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.sender.username} -> {self.recipient.username}: {self.title}"
+    
+    @property
+    def get_absolute_url(self):
+        """Devuelve la URL a la que debe dirigir la notificación"""
+        if self.post:
+            return self.post.get_absolute_url()
+        elif self.comment and self.comment.post:
+            return self.comment.post.get_absolute_url()
+        return '#'
+
+class Mention(models.Model):
+    """Modelo para rastrear menciones de usuarios"""
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='mentions')
+    mentioned_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mentions')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('comment', 'mentioned_user')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.comment.author.username} mencionó a {self.mentioned_user.username}"

@@ -8,7 +8,7 @@ from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView
-from .models import Post, Category, Subcategory, Comment, PostReaction, CommentVote
+from .models import Post, Category, Subcategory, Comment, PostReaction, CommentVote, Notification, Mention
 from .forms import PostForm, CommentForm, SearchForm, CustomUserCreationForm
 
 def home(request):
@@ -72,6 +72,10 @@ def post_detail(request, slug):
             comment.post = post
             comment.author = request.user
             comment.save()
+            
+            # Procesar menciones después de guardar el comentario
+            comment.process_mentions()
+            
             messages.success(request, 'Tu comentario ha sido añadido.')
             return redirect('blog:post_detail', slug=slug)
     
@@ -259,6 +263,9 @@ def add_comment(request, post_slug):
             comment.parent = get_object_or_404(Comment, id=parent_id)
         
         comment.save()
+        
+        # Procesar menciones después de guardar el comentario
+        comment.process_mentions()
         
         return JsonResponse({
             'success': True,
@@ -599,3 +606,75 @@ def toggle_comment_vote(request, comment_id):
             'success': False,
             'error': str(e)
         })
+
+# Vistas para notificaciones
+@login_required
+def notifications_list(request):
+    """Vista para mostrar todas las notificaciones del usuario"""
+    notifications = Notification.objects.filter(recipient=request.user)
+    
+    paginator = Paginator(notifications, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'notifications': page_obj,
+        'page_obj': page_obj,
+        'unread_count': notifications.filter(is_read=False).count(),
+    }
+    return render(request, 'blog/notifications.html', context)
+
+@require_POST
+@login_required
+def mark_notification_read(request, notification_id):
+    """Vista AJAX para marcar una notificación como leída"""
+    try:
+        notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+        notification.is_read = True
+        notification.save()
+        
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@require_POST
+@login_required
+def mark_all_notifications_read(request):
+    """Vista AJAX para marcar todas las notificaciones como leídas"""
+    try:
+        Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def get_notifications_count(request):
+    """Vista AJAX para obtener el número de notificaciones no leídas"""
+    try:
+        unread_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+        return JsonResponse({'unread_count': unread_count})
+    except Exception as e:
+        return JsonResponse({'unread_count': 0, 'error': str(e)})
+
+@login_required
+def get_recent_notifications(request):
+    """Vista AJAX para obtener notificaciones recientes"""
+    try:
+        notifications = Notification.objects.filter(recipient=request.user)[:5]
+        notifications_data = []
+        
+        for notification in notifications:
+            notifications_data.append({
+                'id': notification.id,
+                'title': notification.title,
+                'message': notification.message,
+                'type': notification.notification_type,
+                'is_read': notification.is_read,
+                'created_at': notification.created_at.strftime('%d/%m/%Y %H:%M'),
+                'sender_name': notification.sender.get_full_name() or notification.sender.username,
+                'url': notification.get_absolute_url,
+            })
+        
+        return JsonResponse({'notifications': notifications_data})
+    except Exception as e:
+        return JsonResponse({'notifications': [], 'error': str(e)})
