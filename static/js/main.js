@@ -22,6 +22,7 @@ class MovieReviewsApp {
         this.setupCounterAnimation();
         this.setupProgressBars();
         this.setupLikeSystem();
+        this.setupReactionsSystem();
         this.bindEvents();
     }
 
@@ -515,6 +516,179 @@ class MovieReviewsApp {
             button.innerHTML = originalText;
         } finally {
             button.disabled = false;
+        }
+    }
+
+    // Reactions System
+    setupReactionsSystem() {
+        console.log('Setting up reactions system...');
+        const reactionContainers = document.querySelectorAll('.reactions-container');
+        console.log('Found reaction containers:', reactionContainers.length);
+        
+        reactionContainers.forEach(container => {
+            const mainBtn = container.querySelector('.reaction-main-btn');
+            const panel = container.querySelector('.reactions-panel');
+            const postSlug = container.dataset.postSlug;
+            
+            if (!mainBtn || !panel || !postSlug) return;
+            
+            // Toggle panel visibility
+            mainBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (mainBtn.disabled) {
+                    this.showNotification('Inicia sesión para reaccionar', 'warning');
+                    return;
+                }
+                panel.classList.toggle('show');
+            });
+            
+            // Handle reaction selection
+            panel.querySelectorAll('.reaction-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const reactionType = option.dataset.reaction;
+                    if (reactionType) {
+                        this.toggleReaction(container, postSlug, reactionType);
+                        panel.classList.remove('show');
+                    }
+                });
+            });
+            
+            // Close panel when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    panel.classList.remove('show');
+                }
+            });
+        });
+    }
+
+    async toggleReaction(container, postSlug, reactionType) {
+        const mainBtn = container.querySelector('.reaction-main-btn');
+        const originalText = mainBtn.innerHTML;
+        
+        console.log('Toggle reaction clicked:', postSlug, reactionType);
+        
+        // Show loading state
+        mainBtn.disabled = true;
+        mainBtn.innerHTML = '<span class="reaction-icon">⏳</span><span class="reaction-text">Cargando...</span>';
+        
+        try {
+            const csrfToken = this.getCSRFToken();
+            const formData = new FormData();
+            formData.append('reaction_type', reactionType);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            const response = await fetch(`/toggle-reaction/${postSlug}/`, {
+                method: 'POST',
+                body: formData,
+            });
+            
+            console.log('Response status:', response.status);
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                this.updateReactionsUI(container, data);
+                this.showNotification('¡Reacción actualizada!', 'success');
+                
+                // Add animation
+                mainBtn.classList.add('animate');
+                setTimeout(() => {
+                    mainBtn.classList.remove('animate');
+                }, 400);
+                
+            } else {
+                this.showNotification('Error al procesar la reacción', 'error');
+                mainBtn.innerHTML = originalText;
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            this.showNotification('Error de conexión', 'error');
+            mainBtn.innerHTML = originalText;
+        } finally {
+            mainBtn.disabled = false;
+        }
+    }
+
+    updateReactionsUI(container, data) {
+        const mainBtn = container.querySelector('.reaction-main-btn');
+        const reactionsSummary = container.querySelector('.reactions-summary');
+        
+        // Update main button
+        if (data.user_reaction) {
+            const reactionEmojis = {
+                'like': '👍',
+                'love': '❤️',
+                'laugh': '😂',
+                'wow': '😮',
+                'sad': '😢',
+                'angry': '😡'
+            };
+            
+            const reactionLabels = {
+                'like': 'Me gusta',
+                'love': 'Me encanta',
+                'laugh': 'Me divierte',
+                'wow': 'Me asombra',
+                'sad': 'Me entristece',
+                'angry': 'Me enoja'
+            };
+            
+            mainBtn.classList.add('has-reaction', `reaction-${data.user_reaction}`);
+            mainBtn.innerHTML = `
+                <span class="reaction-icon">${reactionEmojis[data.user_reaction]}</span>
+                <span class="reaction-text">${reactionLabels[data.user_reaction]}</span>
+            `;
+        } else {
+            mainBtn.classList.remove('has-reaction', 'reaction-like', 'reaction-love', 'reaction-laugh', 'reaction-wow', 'reaction-sad', 'reaction-angry');
+            mainBtn.innerHTML = `
+                <span class="reaction-icon">👍</span>
+                <span class="reaction-text">Reaccionar</span>
+            `;
+        }
+        
+        // Update reactions summary
+        if (data.total_reactions > 0) {
+            const totalCount = reactionsSummary.querySelector('.total-count');
+            const countText = reactionsSummary.querySelector('.count-text');
+            const breakdown = reactionsSummary.querySelector('.reactions-breakdown');
+            
+            if (totalCount) totalCount.textContent = data.total_reactions;
+            if (countText) {
+                countText.textContent = data.total_reactions === 1 ? 'reacción' : 'reacciones';
+            }
+            
+            if (breakdown) {
+                breakdown.innerHTML = '';
+                Object.entries(data.reactions_by_type).forEach(([type, count]) => {
+                    if (count > 0) {
+                        const reactionEmojis = {
+                            'like': '👍',
+                            'love': '❤️',
+                            'laugh': '😂',
+                            'wow': '😮',
+                            'sad': '😢',
+                            'angry': '😡'
+                        };
+                        
+                        const reactionDiv = document.createElement('span');
+                        reactionDiv.className = `reaction-count reaction-${type}`;
+                        reactionDiv.innerHTML = `
+                            ${reactionEmojis[type]}
+                            <span class="count">${count}</span>
+                        `;
+                        breakdown.appendChild(reactionDiv);
+                    }
+                });
+            }
+        } else {
+            const noReactions = reactionsSummary.querySelector('.no-reactions');
+            if (noReactions) {
+                noReactions.innerHTML = '<span class="text-muted">Sé el primero en reaccionar</span>';
+            }
         }
     }
 

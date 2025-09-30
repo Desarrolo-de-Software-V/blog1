@@ -198,9 +198,9 @@
                 {{ post.content|linebreaks }}
             </div>
 
-            <!-- Like button -->
+            <!-- Reactions widget -->
             {% csrf_token %}
-            {% include 'blog/components/like_button.html' with post=post likes_count=likes_count is_liked=is_liked %}
+            {% include 'blog/components/reactions_widget.html' with post=post reactions_by_type=reactions_by_type user_reaction=user_reaction total_reactions=total_reactions %}
 
             <!-- Tags and sharing -->
             <div class="border-top pt-4 mt-5">

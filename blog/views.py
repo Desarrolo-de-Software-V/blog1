@@ -8,7 +8,7 @@ from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView
-from .models import Post, Category, Subcategory, Comment, PostLike
+from .models import Post, Category, Subcategory, Comment, PostReaction
 from .forms import PostForm, CommentForm, SearchForm, CustomUserCreationForm
 
 def home(request):
@@ -48,9 +48,10 @@ def post_detail(request, slug):
     # Formulario de comentarios
     comment_form = CommentForm()
     
-    # Información de likes
-    likes_count = post.get_likes_count()
-    is_liked = post.is_liked_by_user(request.user)
+    # Información de reacciones
+    reactions_by_type = post.get_reactions_by_type()
+    user_reaction = post.get_user_reaction(request.user)
+    total_reactions = post.get_reactions_count()
     
     if request.method == 'POST' and request.user.is_authenticated:
         comment_form = CommentForm(request.POST)
@@ -67,8 +68,12 @@ def post_detail(request, slug):
         'comments': comments,
         'related_posts': related_posts,
         'comment_form': comment_form,
-        'likes_count': likes_count,
-        'is_liked': is_liked,
+        'reactions_by_type': reactions_by_type,
+        'user_reaction': user_reaction,
+        'total_reactions': total_reactions,
+        # Compatibilidad con el sistema anterior
+        'likes_count': post.get_likes_count(),
+        'is_liked': post.is_liked_by_user(request.user),
     }
     return render(request, 'blog/post_detail.html', context)
 
@@ -415,8 +420,8 @@ def custom_logout(request):
     return render(request, 'registration/logged_out.html')
 
 @login_required
-def toggle_like(request, post_slug):
-    """Vista AJAX para dar/quitar like a una reseña"""
+def toggle_reaction(request, post_slug):
+    """Vista AJAX para dar/quitar reacciones a una reseña"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'})
     
@@ -424,34 +429,96 @@ def toggle_like(request, post_slug):
         post = get_object_or_404(Post, slug=post_slug, published=True)
         user = request.user
         
-        print(f"Toggle like request: post={post.title}, user={user.username}")
-        print(f"Request method: {request.method}")
-        print(f"CSRF token: {request.META.get('HTTP_X_CSRFTOKEN', 'Not provided')}")
+        # Obtener el tipo de reacción del request
+        reaction_type = request.POST.get('reaction_type', 'like')
         
-        # Verificar si el usuario ya dio like
-        like, created = PostLike.objects.get_or_create(post=post, user=user)
+        # Validar que el tipo de reacción sea válido
+        valid_types = [choice[0] for choice in PostReaction.REACTION_TYPES]
+        if reaction_type not in valid_types:
+            return JsonResponse({'success': False, 'error': 'Invalid reaction type'})
         
-        if not created:
-            # Si ya existía, lo eliminamos (toggle)
-            like.delete()
-            liked = False
-            print(f"Like removed for post {post.title}")
+        print(f"Toggle reaction request: post={post.title}, user={user.username}, reaction={reaction_type}")
+        
+        # Verificar si el usuario ya reaccionó
+        existing_reaction = PostReaction.objects.filter(post=post, user=user).first()
+        
+        if existing_reaction:
+            if existing_reaction.reaction_type == reaction_type:
+                # Si es la misma reacción, la eliminamos (toggle)
+                existing_reaction.delete()
+                user_reaction = None
+                print(f"Reaction {reaction_type} removed for post {post.title}")
+            else:
+                # Si es diferente, la actualizamos
+                existing_reaction.reaction_type = reaction_type
+                existing_reaction.save()
+                user_reaction = reaction_type
+                print(f"Reaction updated to {reaction_type} for post {post.title}")
         else:
-            # Si se creó nuevo, el usuario dio like
-            liked = True
-            print(f"Like added for post {post.title}")
+            # Si no existía, creamos nueva reacción
+            PostReaction.objects.create(post=post, user=user, reaction_type=reaction_type)
+            user_reaction = reaction_type
+            print(f"Reaction {reaction_type} added for post {post.title}")
         
-        likes_count = post.get_likes_count()
-        print(f"Total likes for {post.title}: {likes_count}")
+        # Obtener estadísticas actualizadas
+        reactions_by_type = post.get_reactions_by_type()
+        total_reactions = post.get_reactions_count()
+        
+        print(f"Total reactions for {post.title}: {total_reactions}")
+        print(f"Reactions by type: {reactions_by_type}")
         
         # Retornar respuesta JSON
+        return JsonResponse({
+            'success': True,
+            'user_reaction': user_reaction,
+            'reactions_by_type': reactions_by_type,
+            'total_reactions': total_reactions,
+            # Compatibilidad con el sistema anterior
+            'liked': user_reaction == 'like',
+            'likes_count': reactions_by_type.get('like', 0)
+        })
+    except Exception as e:
+        print(f"Error in toggle_reaction: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+# Mantener la vista anterior para compatibilidad
+@login_required
+def toggle_like(request, post_slug):
+    """Vista AJAX para dar/quitar like a una reseña (compatibilidad)"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        post = get_object_or_404(Post, slug=post_slug, published=True)
+        user = request.user
+        
+        # Usar la nueva lógica de reacciones
+        existing_reaction = PostReaction.objects.filter(post=post, user=user).first()
+        
+        if existing_reaction and existing_reaction.reaction_type == 'like':
+            # Si ya tiene like, lo eliminamos
+            existing_reaction.delete()
+            liked = False
+        else:
+            # Si no tiene like o tiene otra reacción, creamos/actualizamos a like
+            PostReaction.objects.update_or_create(
+                post=post, 
+                user=user, 
+                defaults={'reaction_type': 'like'}
+            )
+            liked = True
+        
+        likes_count = post.get_likes_count()
+        
         return JsonResponse({
             'success': True,
             'liked': liked,
             'likes_count': likes_count
         })
     except Exception as e:
-        print(f"Error in toggle_like: {e}")
         return JsonResponse({
             'success': False,
             'error': str(e)

@@ -112,15 +112,40 @@ class Post(models.Model):
     def rating_stars(self):
         return "⭐" * self.rating + "☆" * (5 - self.rating)
     
-    def get_likes_count(self):
-        """Retorna el número total de likes de la reseña"""
-        return self.likes.count()
+    def get_reactions_count(self):
+        """Retorna el número total de reacciones de la reseña"""
+        return self.reactions.count()
     
-    def is_liked_by_user(self, user):
-        """Verifica si un usuario específico ha dado like a esta reseña"""
+    def get_reactions_by_type(self):
+        """Retorna un diccionario con el conteo de cada tipo de reacción"""
+        from django.db.models import Count
+        return dict(self.reactions.values('reaction_type').annotate(count=Count('reaction_type')).values_list('reaction_type', 'count'))
+    
+    def get_user_reaction(self, user):
+        """Retorna la reacción del usuario específico a esta reseña"""
+        if not user.is_authenticated:
+            return None
+        try:
+            return self.reactions.get(user=user).reaction_type
+        except PostReaction.DoesNotExist:
+            return None
+    
+    def has_user_reacted(self, user):
+        """Verifica si un usuario específico ha reaccionado a esta reseña"""
         if not user.is_authenticated:
             return False
-        return self.likes.filter(user=user).exists()
+        return self.reactions.filter(user=user).exists()
+    
+    # Métodos de compatibilidad con el sistema anterior
+    def get_likes_count(self):
+        """Retorna el número total de likes (compatibilidad)"""
+        return self.reactions.filter(reaction_type='like').count()
+    
+    def is_liked_by_user(self, user):
+        """Verifica si un usuario específico ha dado like (compatibilidad)"""
+        if not user.is_authenticated:
+            return False
+        return self.reactions.filter(user=user, reaction_type='like').exists()
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
@@ -140,15 +165,25 @@ class Comment(models.Model):
     def is_reply(self):
         return self.parent is not None
 
-class PostLike(models.Model):
-    """Modelo para manejar likes de reseñas"""
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='post_likes')
+class PostReaction(models.Model):
+    """Modelo para manejar reacciones de reseñas"""
+    REACTION_TYPES = [
+        ('like', '👍 Me gusta'),
+        ('love', '❤️ Me encanta'),
+        ('laugh', '😂 Me divierte'),
+        ('wow', '😮 Me asombra'),
+        ('sad', '😢 Me entristece'),
+        ('angry', '😡 Me enoja'),
+    ]
+    
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reactions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='post_reactions')
+    reaction_type = models.CharField(max_length=10, choices=REACTION_TYPES, default='like')
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        unique_together = ('post', 'user')  # Un usuario solo puede dar like una vez por post
+        unique_together = ('post', 'user')  # Un usuario solo puede tener una reacción por post
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.user.username} le gusta {self.post.title}"
+        return f"{self.user.username} reaccionó con {self.get_reaction_type_display()} a {self.post.title}"
