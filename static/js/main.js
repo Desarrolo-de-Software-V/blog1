@@ -23,6 +23,7 @@ class MovieReviewsApp {
         this.setupProgressBars();
         this.setupLikeSystem();
         this.setupReactionsSystem();
+        this.setupCommentVotesSystem();
         this.bindEvents();
     }
 
@@ -689,6 +690,139 @@ class MovieReviewsApp {
             if (noReactions) {
                 noReactions.innerHTML = '<span class="text-muted">Sé el primero en reaccionar</span>';
             }
+        }
+    }
+
+    // Comment Votes System
+    setupCommentVotesSystem() {
+        console.log('Setting up comment votes system...');
+        const voteContainers = document.querySelectorAll('.comment-votes');
+        console.log('Found comment vote containers:', voteContainers.length);
+        
+        voteContainers.forEach(container => {
+            const commentId = container.dataset.commentId;
+            const upvoteBtn = container.querySelector('.upvote-btn');
+            const downvoteBtn = container.querySelector('.downvote-btn');
+            
+            if (!commentId || !upvoteBtn || !downvoteBtn) return;
+            
+            // Handle upvote
+            upvoteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (upvoteBtn.disabled) {
+                    this.showNotification('Inicia sesión para votar', 'warning');
+                    return;
+                }
+                this.toggleCommentVote(container, commentId, 'upvote');
+            });
+            
+            // Handle downvote
+            downvoteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (downvoteBtn.disabled) {
+                    this.showNotification('Inicia sesión para votar', 'warning');
+                    return;
+                }
+                this.toggleCommentVote(container, commentId, 'downvote');
+            });
+        });
+    }
+
+    async toggleCommentVote(container, commentId, voteType) {
+        const upvoteBtn = container.querySelector('.upvote-btn');
+        const downvoteBtn = container.querySelector('.downvote-btn');
+        const scoreElement = container.querySelector('.score-number');
+        const upvoteCount = container.querySelector('.upvote-count');
+        const downvoteCount = container.querySelector('.downvote-count');
+        
+        console.log('Toggle comment vote clicked:', commentId, voteType);
+        
+        // Show loading state
+        upvoteBtn.disabled = true;
+        downvoteBtn.disabled = true;
+        
+        try {
+            const csrfToken = this.getCSRFToken();
+            const formData = new FormData();
+            formData.append('vote_type', voteType);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            const response = await fetch(`/toggle-comment-vote/${commentId}/`, {
+                method: 'POST',
+                body: formData,
+            });
+            
+            console.log('Response status:', response.status);
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                this.updateCommentVotesUI(container, data);
+                this.showNotification('¡Voto actualizado!', 'success');
+                
+                // Add animations
+                if (voteType === 'upvote') {
+                    upvoteBtn.classList.add('animate');
+                    setTimeout(() => upvoteBtn.classList.remove('animate'), 300);
+                } else {
+                    downvoteBtn.classList.add('animate');
+                    setTimeout(() => downvoteBtn.classList.remove('animate'), 300);
+                }
+                
+                scoreElement.classList.add('animate');
+                setTimeout(() => scoreElement.classList.remove('animate'), 300);
+                
+            } else {
+                this.showNotification('Error al procesar el voto', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            this.showNotification('Error de conexión', 'error');
+        } finally {
+            upvoteBtn.disabled = false;
+            downvoteBtn.disabled = false;
+        }
+    }
+
+    updateCommentVotesUI(container, data) {
+        const upvoteBtn = container.querySelector('.upvote-btn');
+        const downvoteBtn = container.querySelector('.downvote-btn');
+        const scoreElement = container.querySelector('.score-number');
+        const upvoteCount = container.querySelector('.upvote-count');
+        const downvoteCount = container.querySelector('.downvote-count');
+        
+        // Update vote buttons
+        upvoteBtn.classList.remove('active');
+        downvoteBtn.classList.remove('active');
+        
+        if (data.user_vote === 'upvote') {
+            upvoteBtn.classList.add('active');
+        } else if (data.user_vote === 'downvote') {
+            downvoteBtn.classList.add('active');
+        }
+        
+        // Update score
+        if (scoreElement) {
+            scoreElement.textContent = data.vote_score;
+            
+            // Update score color
+            const scoreContainer = scoreElement.parentElement;
+            scoreContainer.classList.remove('positive', 'negative');
+            if (data.vote_score > 0) {
+                scoreContainer.classList.add('positive');
+            } else if (data.vote_score < 0) {
+                scoreContainer.classList.add('negative');
+            }
+        }
+        
+        // Update counts
+        if (upvoteCount) {
+            upvoteCount.innerHTML = `<i class="fas fa-arrow-up"></i> ${data.upvotes}`;
+        }
+        if (downvoteCount) {
+            downvoteCount.innerHTML = `<i class="fas fa-arrow-down"></i> ${data.downvotes}`;
         }
     }
 

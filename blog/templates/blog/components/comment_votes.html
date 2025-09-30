@@ -1,0 +1,182 @@
+{% load static %}
+
+<div class="comment-votes" data-comment-id="{{ comment.id }}">
+    <div class="vote-buttons">
+        <!-- Upvote Button -->
+        <button class="vote-btn upvote-btn {% if user_vote == 'upvote' %}active{% endif %}" 
+                {% if not user.is_authenticated %}disabled title="Inicia sesión para votar"{% endif %}
+                data-vote-type="upvote">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        <!-- Vote Score -->
+        <div class="vote-score {% if vote_score > 0 %}positive{% elif vote_score < 0 %}negative{% endif %}">
+            <span class="score-number">{{ vote_score }}</span>
+        </div>
+        
+        <!-- Downvote Button -->
+        <button class="vote-btn downvote-btn {% if user_vote == 'downvote' %}active{% endif %}" 
+                {% if not user.is_authenticated %}disabled title="Inicia sesión para votar"{% endif %}
+                data-vote-type="downvote">
+            <i class="fas fa-arrow-down"></i>
+        </button>
+    </div>
+    
+    <!-- Vote Counts -->
+    <div class="vote-counts">
+        <small class="upvote-count text-success">
+            <i class="fas fa-arrow-up"></i> {{ upvotes }}
+        </small>
+        <small class="downvote-count text-danger">
+            <i class="fas fa-arrow-down"></i> {{ downvotes }}
+        </small>
+    </div>
+</div>
+
+<style>
+.comment-votes {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: 1rem;
+    min-width: 60px;
+}
+
+.vote-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.vote-btn {
+    background: none;
+    border: 2px solid #e9ecef;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.vote-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.vote-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.upvote-btn:hover:not(:disabled) {
+    border-color: #28a745;
+    color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.downvote-btn:hover:not(:disabled) {
+    border-color: #dc3545;
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.upvote-btn.active {
+    border-color: #28a745;
+    color: #28a745;
+    background: rgba(40, 167, 69, 0.2);
+}
+
+.downvote-btn.active {
+    border-color: #dc3545;
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.2);
+}
+
+.vote-score {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.vote-score.positive {
+    color: #28a745;
+}
+
+.vote-score.negative {
+    color: #dc3545;
+}
+
+.vote-counts {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+}
+
+.upvote-count {
+    color: #28a745 !important;
+    font-weight: 500;
+}
+
+.downvote-count {
+    color: #dc3545 !important;
+    font-weight: 500;
+}
+
+/* Animaciones */
+@keyframes votePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.vote-btn.animate {
+    animation: votePulse 0.3s ease;
+}
+
+@keyframes scoreChange {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.vote-score.animate {
+    animation: scoreChange 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .comment-votes {
+        margin-right: 0.5rem;
+        min-width: 50px;
+    }
+    
+    .vote-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+    
+    .vote-score {
+        font-size: 0.8rem;
+    }
+    
+    .vote-counts {
+        font-size: 0.65rem;
+    }
+}
+</style>

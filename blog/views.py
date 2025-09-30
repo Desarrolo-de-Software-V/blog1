@@ -8,7 +8,7 @@ from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView
-from .models import Post, Category, Subcategory, Comment, PostReaction
+from .models import Post, Category, Subcategory, Comment, PostReaction, CommentVote
 from .forms import PostForm, CommentForm, SearchForm, CustomUserCreationForm
 
 def home(request):
@@ -53,6 +53,18 @@ def post_detail(request, slug):
     user_reaction = post.get_user_reaction(request.user)
     total_reactions = post.get_reactions_count()
     
+    # Información de votos de comentarios
+    comments_with_votes = []
+    for comment in comments:
+        comment_data = {
+            'comment': comment,
+            'vote_score': comment.get_vote_score(),
+            'upvotes': comment.get_upvotes_count(),
+            'downvotes': comment.get_downvotes_count(),
+            'user_vote': comment.get_user_vote(request.user),
+        }
+        comments_with_votes.append(comment_data)
+    
     if request.method == 'POST' and request.user.is_authenticated:
         comment_form = CommentForm(request.POST)
         if comment_form.is_valid():
@@ -66,6 +78,7 @@ def post_detail(request, slug):
     context = {
         'post': post,
         'comments': comments,
+        'comments_with_votes': comments_with_votes,
         'related_posts': related_posts,
         'comment_form': comment_form,
         'reactions_by_type': reactions_by_type,
@@ -519,6 +532,69 @@ def toggle_like(request, post_slug):
             'likes_count': likes_count
         })
     except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+@login_required
+def toggle_comment_vote(request, comment_id):
+    """Vista AJAX para dar/quitar votos a comentarios"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        comment = get_object_or_404(Comment, id=comment_id, approved=True)
+        user = request.user
+        
+        # Obtener el tipo de voto del request
+        vote_type = request.POST.get('vote_type', 'upvote')
+        
+        # Validar que el tipo de voto sea válido
+        valid_types = [choice[0] for choice in CommentVote.VOTE_TYPES]
+        if vote_type not in valid_types:
+            return JsonResponse({'success': False, 'error': 'Invalid vote type'})
+        
+        print(f"Toggle comment vote request: comment_id={comment_id}, user={user.username}, vote={vote_type}")
+        
+        # Verificar si el usuario ya votó
+        existing_vote = CommentVote.objects.filter(comment=comment, user=user).first()
+        
+        if existing_vote:
+            if existing_vote.vote_type == vote_type:
+                # Si es el mismo voto, lo eliminamos (toggle)
+                existing_vote.delete()
+                user_vote = None
+                print(f"Vote {vote_type} removed for comment {comment_id}")
+            else:
+                # Si es diferente, lo actualizamos
+                existing_vote.vote_type = vote_type
+                existing_vote.save()
+                user_vote = vote_type
+                print(f"Vote updated to {vote_type} for comment {comment_id}")
+        else:
+            # Si no existía, creamos nuevo voto
+            CommentVote.objects.create(comment=comment, user=user, vote_type=vote_type)
+            user_vote = vote_type
+            print(f"Vote {vote_type} added for comment {comment_id}")
+        
+        # Obtener estadísticas actualizadas
+        vote_score = comment.get_vote_score()
+        upvotes = comment.get_upvotes_count()
+        downvotes = comment.get_downvotes_count()
+        
+        print(f"Comment {comment_id} - Score: {vote_score}, Upvotes: {upvotes}, Downvotes: {downvotes}")
+        
+        # Retornar respuesta JSON
+        return JsonResponse({
+            'success': True,
+            'user_vote': user_vote,
+            'vote_score': vote_score,
+            'upvotes': upvotes,
+            'downvotes': downvotes
+        })
+    except Exception as e:
+        print(f"Error in toggle_comment_vote: {e}")
         return JsonResponse({
             'success': False,
             'error': str(e)

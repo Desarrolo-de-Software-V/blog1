@@ -29,6 +29,7 @@ urlpatterns = [
     path('add-comment/<slug:post_slug>/', views.add_comment, name='add_comment'),
     path('toggle-like/<slug:post_slug>/', views.toggle_like, name='toggle_like'),
     path('toggle-reaction/<slug:post_slug>/', views.toggle_reaction, name='toggle_reaction'),
+    path('toggle-comment-vote/<int:comment_id>/', views.toggle_comment_vote, name='toggle_comment_vote'),
     
     # Registro
     path('register/', views.register, name='register'),

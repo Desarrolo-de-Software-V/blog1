@@ -164,6 +164,54 @@ class Comment(models.Model):
     @property
     def is_reply(self):
         return self.parent is not None
+    
+    def get_vote_score(self):
+        """Retorna el puntaje total de votos del comentario"""
+        upvotes = self.votes.filter(vote_type='upvote').count()
+        downvotes = self.votes.filter(vote_type='downvote').count()
+        return upvotes - downvotes
+    
+    def get_upvotes_count(self):
+        """Retorna el número de upvotes"""
+        return self.votes.filter(vote_type='upvote').count()
+    
+    def get_downvotes_count(self):
+        """Retorna el número de downvotes"""
+        return self.votes.filter(vote_type='downvote').count()
+    
+    def get_user_vote(self, user):
+        """Retorna el voto del usuario específico"""
+        if not user.is_authenticated:
+            return None
+        try:
+            return self.votes.get(user=user).vote_type
+        except CommentVote.DoesNotExist:
+            return None
+    
+    def has_user_voted(self, user):
+        """Verifica si el usuario ha votado en este comentario"""
+        if not user.is_authenticated:
+            return False
+        return self.votes.filter(user=user).exists()
+
+class CommentVote(models.Model):
+    """Modelo para manejar votos de comentarios"""
+    VOTE_TYPES = [
+        ('upvote', '⬆️ Upvote'),
+        ('downvote', '⬇️ Downvote'),
+    ]
+    
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='votes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comment_votes')
+    vote_type = models.CharField(max_length=10, choices=VOTE_TYPES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('comment', 'user')  # Un usuario solo puede votar una vez por comentario
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} votó {self.get_vote_type_display()} en comentario de {self.comment.author.username}"
 
 class PostReaction(models.Model):
     """Modelo para manejar reacciones de reseñas"""
