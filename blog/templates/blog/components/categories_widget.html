@@ -1,0 +1,76 @@
+<div class="categories-widget">
+    <h5 class="widget-title">
+        <i class="fas fa-folder-open me-2"></i>
+        Categorías
+    </h5>
+    
+    <div class="categories-list">
+        {% for category in categories %}
+            <div class="category-item">
+                <a href="{{ category.get_absolute_url }}" 
+                   class="category-link d-flex justify-content-between align-items-center">
+                    <span class="category-name">
+                        <i class="{{ category.name|category_icon }} me-2"></i>
+                        {{ category.name }}
+                    </span>
+                    <span class="badge bg-{{ category.name|category_color }}">
+                        {{ category.post_count }}
+                    </span>
+                </a>
+            </div>
+        {% empty %}
+            <p class="text-muted">No hay categorías disponibles.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.categories-widget {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.widget-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.categories-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.category-item {
+    margin-bottom: 0.5rem;
+}
+
+.category-link {
+    color: #495057;
+    text-decoration: none;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.category-link:hover {
+    background-color: #f8f9fa;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.category-name {
+    font-weight: 500;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+</style>

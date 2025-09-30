@@ -1,0 +1,51 @@
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-light rounded p-3 mb-4">
+        {% for item in items %}
+            {% if forloop.last %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    {% if item.icon %}
+                        <i class="{{ item.icon }} me-1"></i>
+                    {% endif %}
+                    {{ item.title }}
+                </li>
+            {% else %}
+                <li class="breadcrumb-item">
+                    {% if item.url %}
+                        <a href="{{ item.url }}" class="text-decoration-none">
+                            {% if item.icon %}
+                                <i class="{{ item.icon }} me-1"></i>
+                            {% endif %}
+                            {{ item.title }}
+                        </a>
+                    {% else %}
+                        {% if item.icon %}
+                            <i class="{{ item.icon }} me-1"></i>
+                        {% endif %}
+                        {{ item.title }}
+                    {% endif %}
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+
+<style>
+.breadcrumb {
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #6c757d;
+}
+
+.breadcrumb-item a:hover {
+    color: #0d6efd !important;
+}
+
+.breadcrumb-item.active {
+    color: #495057;
+    font-weight: 500;
+}
+</style>

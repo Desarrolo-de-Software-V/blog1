@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if query %}
+        Resultados para "{{ query }}" - MovieReviews
+    {% else %}
+        Búsqueda Avanzada - MovieReviews
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Search Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="text-center mb-4">
+                <h1 class="display-5 fw-bold text-primary">
+                    <i class="fas fa-search"></i>
+                    {% if query %}
+                        Resultados de Búsqueda
+                    {% else %}
+                        Búsqueda Avanzada
+                    {% endif %}
+                </h1>
+                {% if query %}
+                <p class="lead text-muted">
+                    Mostrando resultados para "<span class="fw-bold">{{ query }}</span>"
+                </p>
+                {% else %}
+                <p class="lead text-muted">
+                    Encuentra reseñas específicas usando los filtros avanzados
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Search Form -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        Filtros de Búsqueda
+                        <button class="btn btn-sm btn-outline-secondary float-end" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#searchFilters">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </h5>
+                </div>
+                
+                <div class="collapse show" id="searchFilters">
+                    <div class="card-body">
+                        <form method="get" action="{% url 'blog:search' %}" class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">
+                                    <i class="fas fa-search me-1"></i>
+                                    Buscar texto
+                                </label>
+                                {{ form.query }}
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    <i class="fas fa-tags me-1"></i>
+                                    Categoría
+                                </label>
+                                {{ form.category }}
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <label class="form-label">
+                                    <i class="fas fa-star me-1"></i>
+                                    Puntuación
+                                </label>
+                                {{ form.rating }}
+                            </div>
+                            
+                            <div class="col-md-1">
+                                <label class="form-label">Desde</label>
+                                {{ form.year_from }}
+                            </div>
+                            
+                            <div class="col-md-1">
+                                <label class="form-label">Hasta</label>
+                                {{ form.year_to }}
+                            </div>
+                            
+                            <div class="col-md-1">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-flex flex-column gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    <a href="{% url 'blog:search' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results Summary -->
+    {% if posts %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Se encontraron {{ page_obj.paginator.count }} reseña{{ page_obj.paginator.count|pluralize }} 
+                        {% if query %}para "{{ query }}"{% endif %}
+                    </h6>
+                </div>
+                
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" 
+                            data-bs-toggle="dropdown">
+                        <i class="fas fa-sort me-1"></i>
+                        Ordenar
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=relevance">Relevancia</a></li>
+                        <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=-created_at">Más recientes</a></li>
+                        <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=-rating">Mejor puntuación</a></li>
+                        <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=title">Título A-Z</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Search Results -->
+    <div class="row">
+        {% for post in posts %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card search-result-card h-100">
+                <!-- Image -->
+                {% if post.featured_image %}
+                <div class="position-relative">
+                    <img src="{{ post.featured_image.url }}" class="card-img-top" alt="{{ post.title }}">
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-primary">{{ post.category.name }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center position-relative" 
+                     style="height: 200px;">
+                    <i class="fas fa-film fs-1 text-muted"></i>
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-primary">{{ post.category.name }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Content -->
+                <div class="card-body d-flex flex-column">
+                    <!-- Rating -->
+                    <div class="text-center mb-2">
+                        <div class="rating fs-5">{{ post.rating_stars }}</div>
+                    </div>
+                    
+                    <!-- Title and movie -->
+                    <h5 class="card-title">
+                        <a href="{{ post.get_absolute_url }}" class="text-decoration-none">
+                            {% if query %}
+                                {{ post.title|highlight:query }}
+                            {% else %}
+                                {{ post.title }}
+                            {% endif %}
+                        </a>
+                    </h5>
+                    
+                    <h6 class="text-muted mb-2">
+                        {% if query %}
+                            {{ post.movie_title|highlight:query }}
+                        {% else %}
+                            {{ post.movie_title }}
+                        {% endif %}
+                    </h6>
+                    
+                    <!-- Excerpt -->
+                    <p class="card-text flex-grow-1">
+                        {% if query %}
+                            {{ post.excerpt|highlight:query|truncatewords:20 }}
+                        {% else %}
+                            {{ post.excerpt|truncatewords:20 }}
+                        {% endif %}
+                    </p>
+                    
+                    <!-- Meta info -->
+                    <div class="card-meta">
+                        <div class="row text-center mb-2">
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ post.release_year }}
+                                </small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-user"></i>
+                                    {{ post.author.first_name|default:post.author.username }}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        {% if post.director %}
+                        <div class="text-center mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-video"></i>
+                                {% if query %}
+                                    {{ post.director|highlight:query }}
+                                {% else %}
+                                    {{ post.director }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ post.get_absolute_url }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-eye"></i> Leer Reseña
+                        </a>
+                        <small class="text-muted">
+                            <i class="fas fa-comments"></i>
+                            {{ post.comments.count }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- No results -->
+        <div class="col-12">
+            <div class="text-center py-5">
+                {% if query %}
+                <i class="fas fa-search-minus fs-1 text-muted mb-4"></i>
+                <h3 class="text-muted">No se encontraron resultados</h3>
+                <p class="text-muted mb-4">
+                    No hay reseñas que coincidan con tu búsqueda "<strong>{{ query }}</strong>".
+                </p>
+                
+                <div class="suggestions mb-4">
+                    <h6>Sugerencias:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>Verifica la ortografía</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Usa palabras más generales</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Prueba con sinónimos</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Cambia los filtros de búsqueda</li>
+                    </ul>
+                </div>
+                
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{% url 'blog:search' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i> Nueva Búsqueda
+                    </a>
+                    <a href="{% url 'blog:post_list' %}" class="btn btn-primary">
+                        <i class="fas fa-list"></i> Ver Todas las Reseñas
+                    </a>
+                </div>
+                {% else %}
+                <i class="fas fa-search fs-1 text-muted mb-4"></i>
+                <h3 class="text-muted">Búsqueda Avanzada</h3>
+                <p class="text-muted mb-4">
+                    Usa los filtros de arriba para encontrar reseñas específicas.
+                </p>
+                
+                <div class="quick-searches">
+                    <h6>Búsquedas populares:</h6>
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <a href="?query=anime" class="badge bg-primary text-decoration-none px-3 py-2">Anime</a>
+                        <a href="?query=acción" class="badge bg-success text-decoration-none px-3 py-2">Acción</a>
+                        <a href="?query=terror" class="badge bg-danger text-decoration-none px-3 py-2">Terror</a>
+                        <a href="?query=comedia" class="badge bg-warning text-decoration-none px-3 py-2">Comedia</a>
+                        <a href="?rating=5" class="badge bg-info text-decoration-none px-3 py-2">5 Estrellas</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <nav aria-label="Navegación de resultados">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1&{{ request.GET.urlencode }}">
+                            Primera
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">
+                            Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">
+                            Siguiente
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ request.GET.urlencode }}">
+                            Última
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.search-result-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.search-result-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.rating {
+    color: #ffc107;
+}
+
+.card-meta {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+}
+
+.suggestions ul {
+    max-width: 300px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.quick-searches .badge {
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.quick-searches .badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* Highlight search terms */
+.highlight {
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

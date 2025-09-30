@@ -1,0 +1,415 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Registrarse - MovieReviews{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.auth-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 40px;
+    text-align: center;
+}
+
+.auth-body {
+    padding: 40px;
+}
+
+.form-control {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    padding: 12px 20px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #2c3e50;
+    box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
+    transform: translateY(-2px);
+}
+
+.btn-register {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 30px;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(44, 62, 80, 0.3);
+    color: white;
+}
+
+.form-floating {
+    margin-bottom: 20px;
+}
+
+.form-floating > .form-control {
+    padding: 1rem 0.75rem;
+}
+
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+.social-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 30px 0;
+}
+
+.social-divider::before,
+.social-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #dee2e6;
+}
+
+.social-divider span {
+    padding: 0 20px;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.benefits-list {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 25px;
+    margin-top: 30px;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.benefit-item:last-child {
+    margin-bottom: 0;
+}
+
+.benefit-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.password-strength {
+    margin-top: 8px;
+}
+
+.strength-bar {
+    height: 4px;
+    background: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.strength-fill {
+    height: 100%;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="auth-card">
+                    <div class="row g-0">
+                        <!-- Left side - Form -->
+                        <div class="col-lg-6">
+                            <div class="auth-header">
+                                <i class="fas fa-user-plus fs-1 mb-3"></i>
+                                <h2 class="fw-bold mb-2">Únete a MovieReviews</h2>
+                                <p class="mb-0">Crea tu cuenta y comienza a compartir reseñas</p>
+                            </div>
+                            
+                            <div class="auth-body">
+                                <form method="post" id="register-form">
+                                    {% csrf_token %}
+                                    
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <div class="form-floating">
+                                                {{ form.first_name }}
+                                                <label for="{{ form.first_name.id_for_label }}">
+                                                    <i class="fas fa-user me-2"></i>Nombre
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-floating">
+                                                {{ form.last_name }}
+                                                <label for="{{ form.last_name.id_for_label }}">
+                                                    <i class="fas fa-user me-2"></i>Apellido
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-floating">
+                                        {{ form.username }}
+                                        <label for="{{ form.username.id_for_label }}">
+                                            <i class="fas fa-at me-2"></i>Nombre de usuario
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-floating">
+                                        {{ form.email }}
+                                        <label for="{{ form.email.id_for_label }}">
+                                            <i class="fas fa-envelope me-2"></i>Correo electrónico
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-floating">
+                                        {{ form.password1 }}
+                                        <label for="{{ form.password1.id_for_label }}">
+                                            <i class="fas fa-lock me-2"></i>Contraseña
+                                        </label>
+                                        <div class="password-strength">
+                                            <div class="strength-bar">
+                                                <div class="strength-fill" id="strength-fill"></div>
+                                            </div>
+                                            <small class="text-muted" id="strength-text">Seguridad de la contraseña</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-floating">
+                                        {{ form.password2 }}
+                                        <label for="{{ form.password2.id_for_label }}">
+                                            <i class="fas fa-lock me-2"></i>Confirmar contraseña
+                                        </label>
+                                    </div>
+                                    
+                                    <!-- Form errors -->
+                                    {% if form.errors %}
+                                    <div class="alert alert-danger">
+                                        {% for field in form %}
+                                            {% for error in field.errors %}
+                                                <div><i class="fas fa-exclamation-circle me-2"></i>{{ error }}</div>
+                                            {% endfor %}
+                                        {% endfor %}
+                                        {% for error in form.non_field_errors %}
+                                            <div><i class="fas fa-exclamation-circle me-2"></i>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="d-grid mb-3">
+                                        <button type="submit" class="btn btn-register btn-lg">
+                                            <i class="fas fa-user-plus me-2"></i>
+                                            Crear Cuenta
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="text-center">
+                                        <p class="mb-0">
+                                            ¿Ya tienes cuenta? 
+                                            <a href="{% url 'blog:login' %}" class="text-decoration-none fw-bold">
+                                                Inicia sesión aquí
+                                            </a>
+                                        </p>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Right side - Benefits -->
+                        <div class="col-lg-6 d-flex align-items-center">
+                            <div class="p-4 w-100">
+                                <h3 class="fw-bold mb-4 text-primary">
+                                    <i class="fas fa-star me-2"></i>
+                                    ¿Por qué unirte?
+                                </h3>
+                                
+                                <div class="benefits-list">
+                                    <div class="benefit-item">
+                                        <div class="benefit-icon">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Escribe Reseñas</h6>
+                                            <small class="text-muted">Comparte tus opiniones sobre películas y anime</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="benefit-item">
+                                        <div class="benefit-icon">
+                                            <i class="fas fa-comments"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Comenta y Discute</h6>
+                                            <small class="text-muted">Participa en conversaciones con otros usuarios</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="benefit-item">
+                                        <div class="benefit-icon">
+                                            <i class="fas fa-bookmark"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Guarda Favoritos</h6>
+                                            <small class="text-muted">Organiza tus reseñas favoritas</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="benefit-item">
+                                        <div class="benefit-icon">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Únete a la Comunidad</h6>
+                                            <small class="text-muted">Conecta con otros amantes del cine y anime</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="benefit-item">
+                                        <div class="benefit-icon">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Sigue tus Estadísticas</h6>
+                                            <small class="text-muted">Ve el impacto de tus reseñas</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mt-4">
+                                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDIwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjZjhmOWZhIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iNTUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TW92aWVSZXZpZXdzPC90ZXh0Pgo8L3N2Zz4K" alt="MovieReviews" class="img-fluid" style="max-width: 150px; opacity: 0.7;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordField = document.getElementById('{{ form.password1.id_for_label }}');
+    const confirmField = document.getElementById('{{ form.password2.id_for_label }}');
+    const strengthFill = document.getElementById('strength-fill');
+    const strengthText = document.getElementById('strength-text');
+    
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        let text = 'Muy débil';
+        let color = '#dc3545';
+        
+        if (password.length >= 8) strength += 1;
+        if (/[a-z]/.test(password)) strength += 1;
+        if (/[A-Z]/.test(password)) strength += 1;
+        if (/[0-9]/.test(password)) strength += 1;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+        
+        switch (strength) {
+            case 0:
+            case 1:
+                text = 'Muy débil';
+                color = '#dc3545';
+                break;
+            case 2:
+                text = 'Débil';
+                color = '#fd7e14';
+                break;
+            case 3:
+                text = 'Regular';
+                color = '#ffc107';
+                break;
+            case 4:
+                text = 'Fuerte';
+                color = '#198754';
+                break;
+            case 5:
+                text = 'Muy fuerte';
+                color = '#20c997';
+                break;
+        }
+        
+        strengthFill.style.width = `${(strength / 5) * 100}%`;
+        strengthFill.style.backgroundColor = color;
+        strengthText.textContent = text;
+        strengthText.style.color = color;
+    }
+    
+    function checkPasswordMatch() {
+        if (confirmField.value && passwordField.value !== confirmField.value) {
+            confirmField.setCustomValidity('Las contraseñas no coinciden');
+            confirmField.classList.add('is-invalid');
+        } else {
+            confirmField.setCustomValidity('');
+            confirmField.classList.remove('is-invalid');
+        }
+    }
+    
+    passwordField.addEventListener('input', function() {
+        checkPasswordStrength(this.value);
+        checkPasswordMatch();
+    });
+    
+    confirmField.addEventListener('input', checkPasswordMatch);
+    
+    // Form submission
+    const form = document.getElementById('register-form');
+    form.addEventListener('submit', function(e) {
+        checkPasswordMatch();
+        
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        form.classList.add('was-validated');
+    });
+    
+    // Real-time validation
+    const inputs = form.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% load blog_extras %}
+
+<div class="social-share">
+    <h6 class="mb-3">
+        <i class="fas fa-share-alt me-2"></i>
+        Compartir esta reseña
+    </h6>
+    
+    <div class="d-flex gap-2 flex-wrap">
+        <!-- Twitter -->
+        <a href="https://twitter.com/intent/tweet?text={{ twitter_text|urlencode }}&url={{ current_url|urlencode }}" 
+           target="_blank" class="btn btn-twitter btn-sm" title="Compartir en Twitter">
+            <i class="fab fa-twitter"></i>
+            <span class="d-none d-sm-inline ms-1">Twitter</span>
+        </a>
+        
+        <!-- Facebook -->
+        <a href="https://www.facebook.com/sharer/sharer.php?u={{ current_url|urlencode }}" 
+           target="_blank" class="btn btn-facebook btn-sm" title="Compartir en Facebook">
+            <i class="fab fa-facebook-f"></i>
+            <span class="d-none d-sm-inline ms-1">Facebook</span>
+        </a>
+        
+        <!-- WhatsApp -->
+        <a href="https://wa.me/?text={{ twitter_text|urlencode }}%20{{ current_url|urlencode }}" 
+           target="_blank" class="btn btn-whatsapp btn-sm" title="Compartir en WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+            <span class="d-none d-sm-inline ms-1">WhatsApp</span>
+        </a>
+        
+        <!-- Telegram -->
+        <a href="https://t.me/share/url?url={{ current_url|urlencode }}&text={{ twitter_text|urlencode }}" 
+           target="_blank" class="btn btn-telegram btn-sm" title="Compartir en Telegram">
+            <i class="fab fa-telegram-plane"></i>
+            <span class="d-none d-sm-inline ms-1">Telegram</span>
+        </a>
+        
+        <!-- Copiar enlace -->
+        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                onclick="copyToClipboard('{{ current_url }}')" title="Copiar enlace">
+            <i class="fas fa-link"></i>
+            <span class="d-none d-sm-inline ms-1">Copiar</span>
+        </button>
+    </div>
+    
+    <!-- Mensaje de éxito -->
+    <div id="copy-success" class="alert alert-success mt-2" style="display: none;">
+        <i class="fas fa-check me-2"></i>
+        ¡Enlace copiado al portapapeles!
+    </div>
+</div>
+
+<style>
+.social-share .btn {
+    border-radius: 25px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-twitter {
+    background-color: #1da1f2;
+    border-color: #1da1f2;
+    color: white;
+}
+
+.btn-twitter:hover {
+    background-color: #0d8bd9;
+    border-color: #0d8bd9;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-facebook {
+    background-color: #3b5998;
+    border-color: #3b5998;
+    color: white;
+}
+
+.btn-facebook:hover {
+    background-color: #2d4373;
+    border-color: #2d4373;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-whatsapp {
+    background-color: #25d366;
+    border-color: #25d366;
+    color: white;
+}
+
+.btn-whatsapp:hover {
+    background-color: #1ebe57;
+    border-color: #1ebe57;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-telegram {
+    background-color: #0088cc;
+    border-color: #0088cc;
+    color: white;
+}
+
+.btn-telegram:hover {
+    background-color: #006699;
+    border-color: #006699;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-outline-secondary:hover {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 576px) {
+    .social-share .d-flex {
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Mostrar mensaje de éxito
+        const successMsg = document.getElementById('copy-success');
+        successMsg.style.display = 'block';
+        
+        // Ocultar después de 3 segundos
+        setTimeout(function() {
+            successMsg.style.display = 'none';
+        }, 3000);
+    }).catch(function(err) {
+        // Fallback para navegadores más antiguos
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            const successMsg = document.getElementById('copy-success');
+            successMsg.style.display = 'block';
+            setTimeout(function() {
+                successMsg.style.display = 'none';
+            }, 3000);
+        } catch (err) {
+            console.error('Error al copiar: ', err);
+        }
+        document.body.removeChild(textArea);
+    });
+}
+</script>

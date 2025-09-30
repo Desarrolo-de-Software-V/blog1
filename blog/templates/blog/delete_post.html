@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Reseña: {{ post.title }} - MovieReviews{% endblock %}
+
+{% block extra_css %}
+<style>
+.delete-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+}
+
+.delete-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(231, 76, 60, 0.2);
+    border: 2px solid #e74c3c;
+    overflow: hidden;
+}
+
+.delete-header {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+.delete-body {
+    padding: 30px;
+}
+
+.post-preview {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid #dee2e6;
+}
+
+.btn-delete-confirm {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 30px;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-delete-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+    color: white;
+}
+
+.warning-icon {
+    font-size: 4rem;
+    color: #e74c3c;
+    margin-bottom: 20px;
+}
+
+.consequences-list {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.post-stats {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.stat-item {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #e74c3c;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="delete-card">
+                    <div class="delete-header">
+                        <i class="fas fa-exclamation-triangle warning-icon"></i>
+                        <h2 class="fw-bold mb-2">¿Eliminar Reseña?</h2>
+                        <p class="mb-0">Esta acción no se puede deshacer</p>
+                    </div>
+                    
+                    <div class="delete-body">
+                        <!-- Post preview -->
+                        <div class="post-preview mb-4">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    {% if post.featured_image %}
+                                    <img src="{{ post.featured_image.url }}" class="img-fluid rounded" 
+                                         alt="{{ post.title }}" style="max-height: 120px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                         style="height: 120px;">
+                                        <i class="fas fa-film fs-2 text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-9">
+                                    <h5 class="mb-2">{{ post.title }}</h5>
+                                    <h6 class="text-muted mb-2">{{ post.movie_title }}</h6>
+                                    <p class="text-muted small mb-2">{{ post.excerpt|truncatewords:20 }}</p>
+                                    
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <small class="text-muted">
+                                                <i class="fas fa-star text-warning"></i>
+                                                {{ post.rating_stars }}
+                                            </small>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">
+                                                <i class="fas fa-tag"></i>
+                                                {{ post.category.name }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Post statistics -->
+                        <div class="post-stats">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ post.comments.count }}</div>
+                                <small class="text-muted">Comentarios</small>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <div class="stat-number">
+                                    {{ post.created_at|timesince }}
+                                </div>
+                                <small class="text-muted">Tiempo online</small>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <div class="stat-number">
+                                    {% if post.featured %}SÍ{% else %}NO{% endif %}
+                                </div>
+                                <small class="text-muted">Destacada</small>
+                            </div>
+                        </div>
+
+                        <!-- Warning about consequences -->
+                        <div class="consequences-list">
+                            <h6 class="text-warning mb-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Al eliminar esta reseña:
+                            </h6>
+                            <ul class="mb-0">
+                                <li>Se perderá todo el contenido de la reseña</li>
+                                <li>Se eliminarán todos los comentarios ({{ post.comments.count }})</li>
+                                <li>Las imágenes asociadas se borrarán del servidor</li>
+                                <li>Los enlaces a esta reseña dejarán de funcionar</li>
+                                <li><strong>Esta acción es irreversible</strong></li>
+                            </ul>
+                        </div>
+
+                        <!-- Alternative actions -->
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-lightbulb me-2"></i>¿Consideraste estas alternativas?</h6>
+                            <ul class="mb-0">
+                                <li><strong>Despublicar:</strong> Mantén la reseña como borrador</li>
+                                <li><strong>Editar:</strong> Actualiza el contenido en lugar de eliminar</li>
+                                <li><strong>Archivar:</strong> Guarda una copia antes de eliminar</li>
+                            </ul>
+                        </div>
+
+                        <!-- Confirmation form -->
+                        <form method="post" class="text-center">
+                            {% csrf_token %}
+                            
+                            <div class="mb-4">
+                                <div class="form-check d-inline-block">
+                                    <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                                    <label class="form-check-label" for="confirmDelete">
+                                        Entiendo que esta acción es irreversible
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-3 justify-content-center">
+                                <button type="submit" class="btn btn-delete-confirm btn-lg" id="deleteButton" disabled>
+                                    <i class="fas fa-trash me-2"></i>
+                                    Sí, Eliminar Reseña
+                                </button>
+                                
+                                <a href="{{ post.get_absolute_url }}" class="btn btn-outline-secondary btn-lg">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancelar
+                                </a>
+                                
+                                <a href="{% url 'blog:edit_post' post.slug %}" class="btn btn-outline-primary btn-lg">
+                                    <i class="fas fa-edit me-2"></i>
+                                    Editar en su lugar
+                                </a>
+                            </div>
+                        </form>
+
+                        <!-- Additional help -->
+                        <div class="text-center mt-4">
+                            <small class="text-muted">
+                                <i class="fas fa-question-circle me-1"></i>
+                                ¿Tienes dudas? <a href="#" class="text-decoration-none">Contacta al soporte</a>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmDelete');
+    const deleteButton = document.getElementById('deleteButton');
+    
+    // Enable/disable delete button based on checkbox
+    confirmCheckbox.addEventListener('change', function() {
+        deleteButton.disabled = !this.checked;
+        
+        if (this.checked) {
+            deleteButton.classList.add('pulse-animation');
+        } else {
+            deleteButton.classList.remove('pulse-animation');
+        }
+    });
+    
+    // Double confirmation on form submit
+    deleteButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Custom confirmation dialog
+        const confirmation = confirm(
+            '¿ESTÁS COMPLETAMENTE SEGURO?\n\n' +
+            'Esta es tu última oportunidad para cambiar de opinión.\n' +
+            'La reseña "{{ post.title }}" será eliminada permanentemente.\n\n' +
+            'Haz clic en "Aceptar" para confirmar la eliminación.'
+        );
+        
+        if (confirmation) {
+            // Submit the form
+            this.closest('form').submit();
+        }
+    });
+    
+    // Add some visual feedback
+    const style = document.createElement('style');
+    style.textContent = `
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .btn-delete-confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

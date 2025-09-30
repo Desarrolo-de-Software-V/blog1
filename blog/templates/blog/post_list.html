@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load blog_extras %}
+
+{% block title %}Todas las Reseñas - MovieReviews{% endblock %}
+
+{% block content %}
+<div class="container section-spacing">
+    <!-- Header -->
+    <div class="section-header text-center mb-5 animate-fade-in-up">
+        <h1 class="section-title text-gradient">
+            <i class="fas fa-film me-2"></i>
+            Todas las Reseñas
+        </h1>
+        <p class="section-subtitle text-muted">
+            Descubre todas nuestras reseñas de películas y anime
+        </p>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card filter-card animate-fade-in-down">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        Filtros de Búsqueda
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{% url 'blog:search' %}" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="fas fa-search me-1"></i>
+                                Buscar
+                            </label>
+                            <input type="text" name="query" class="form-control" 
+                                   placeholder="Título, película, director..." value="{{ request.GET.query }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">
+                                <i class="fas fa-tags me-1"></i>
+                                Categoría
+                            </label>
+                            <select name="category" class="form-control">
+                                <option value="">Todas</option>
+                                {% get_popular_categories as categories %}
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ cat.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">
+                                <i class="fas fa-star me-1"></i>
+                                Puntuación
+                            </label>
+                            <select name="rating" class="form-control">
+                                <option value="">Cualquiera</option>
+                                <option value="5" {% if request.GET.rating == "5" %}selected{% endif %}>⭐⭐⭐⭐⭐</option>
+                                <option value="4" {% if request.GET.rating == "4" %}selected{% endif %}>⭐⭐⭐⭐</option>
+                                <option value="3" {% if request.GET.rating == "3" %}selected{% endif %}>⭐⭐⭐</option>
+                                <option value="2" {% if request.GET.rating == "2" %}selected{% endif %}>⭐⭐</option>
+                                <option value="1" {% if request.GET.rating == "1" %}selected{% endif %}>⭐</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-ripple">
+                                    <i class="fas fa-search me-1"></i> Buscar
+                                </button>
+                                <a href="{% url 'blog:post_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i> Limpiar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Summary -->
+    {% if posts %}
+    <div class="results-summary mb-4 animate-fade-in-up">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="results-info">
+                <h6 class="text-muted mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Mostrando {{ page_obj.start_index }}-{{ page_obj.end_index }} 
+                    de {{ page_obj.paginator.count }} reseñas
+                </h6>
+            </div>
+            
+            <div class="sort-options">
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" 
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-sort me-1"></i>
+                        Ordenar por
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?sort=relevance">
+                            <i class="fas fa-fire me-2"></i>Relevancia
+                        </a></li>
+                        <li><a class="dropdown-item" href="?sort=-created_at">
+                            <i class="fas fa-clock me-2"></i>Más recientes
+                        </a></li>
+                        <li><a class="dropdown-item" href="?sort=-rating">
+                            <i class="fas fa-star me-2"></i>Mejor puntuación
+                        </a></li>
+                        <li><a class="dropdown-item" href="?sort=title">
+                            <i class="fas fa-sort-alpha-down me-2"></i>Título A-Z
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Posts Grid -->
+    <div class="posts-grid">
+        <div class="row stagger-children">
+            {% for post in posts %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="post-card hover-lift {% if post.featured %}post-card-featured{% endif %}">
+                    <div class="post-card-image">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy">
+                        {% else %}
+                        <div class="placeholder-image">
+                            <i class="fas fa-film fs-1"></i>
+                        </div>
+                        {% endif %}
+                        <div class="post-card-overlay"></div>
+                        
+                        <!-- Reading time overlay -->
+                        <div class="reading-time-badge">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ post.content|reading_time }}
+                        </div>
+                    </div>
+                    
+                    <div class="post-card-content">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <a href="{{ post.category.get_absolute_url }}" class="category-badge {{ post.category.name|lower }}">
+                                <i class="{{ post.category.name|category_icon }} me-1"></i>
+                                {{ post.category.name }}
+                            </a>
+                            <div class="rating-stars">
+                                {% rating_stars post.rating False %}
+                            </div>
+                        </div>
+                        
+                        <h5 class="post-card-title">
+                            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                        </h5>
+                        
+                        <h6 class="post-card-movie">{{ post.movie_title }}</h6>
+                        
+                        <p class="post-card-excerpt">{{ post.excerpt|truncate_smart:100 }}</p>
+                        
+                        <div class="post-card-meta">
+                            <div class="row text-center mb-2">
+                                <div class="col-4">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar"></i>
+                                        <div>{{ post.release_year }}</div>
+                                    </small>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">
+                                        <i class="fas fa-user"></i>
+                                        <div>{{ post.author.first_name|default:post.author.username|truncatechars:8 }}</div>
+                                    </small>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">
+                                        <i class="fas fa-comments"></i>
+                                        <div>{{ post.comments.count }}</div>
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            {% if post.director %}
+                            <div class="text-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-video me-1"></i>
+                                    {{ post.director|truncate_smart:20 }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ post.get_absolute_url }}" class="btn btn-primary btn-sm btn-ripple">
+                                <i class="fas fa-eye me-1"></i> Leer Reseña
+                            </a>
+                            <small class="text-muted">
+                                {{ post.created_at|timesince }} ago
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <!-- Empty state -->
+            <div class="col-12">
+                <div class="hero-card animate-bounce-in text-center">
+                    {% if request.GET.query %}
+                    <div class="hero-card-icon">
+                        <i class="fas fa-search-minus"></i>
+                    </div>
+                    <h3 class="hero-card-title">No se encontraron resultados</h3>
+                    <p class="hero-card-description">
+                        No hay reseñas que coincidan con tu búsqueda "{{ request.GET.query }}".
+                    </p>
+                    
+                    <div class="suggestions mb-4">
+                        <h6>Sugerencias:</h6>
+                        <ul class="list-unstyled text-start" style="max-width: 300px; margin: 0 auto;">
+                            <li><i class="fas fa-check text-success me-2"></i>Verifica la ortografía</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Usa palabras más generales</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Prueba con sinónimos</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Cambia los filtros</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="{% url 'blog:search' %}" class="btn btn-outline-primary hover-lift">
+                            <i class="fas fa-search me-1"></i> Nueva Búsqueda
+                        </a>
+                        <a href="{% url 'blog:post_list' %}" class="btn btn-primary hover-lift">
+                            <i class="fas fa-list me-1"></i> Ver Todas
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="hero-card-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3 class="hero-card-title">Aún no hay reseñas</h3>
+                    <p class="hero-card-description">
+                        ¡Sé el primero en escribir una reseña!
+                    </p>
+                    
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'blog:create_post' %}" class="btn btn-primary btn-lg hover-lift">
+                        <i class="fas fa-plus me-2"></i> Escribir Primera Reseña
+                    </a>
+                    {% else %}
+                    <a href="{% url 'blog:register' %}" class="btn btn-primary btn-lg hover-lift">
+                        <i class="fas fa-user-plus me-2"></i> Únete y Escribe
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination-wrapper mt-5 animate-fade-in-up">
+        <nav aria-label="Navegación de páginas">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link hover-scale" href="?page=1{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}">
+                        <i class="fas fa-angle-double-left me-1"></i> Primera
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link hover-scale" href="?page={{ page_obj.previous_page_number }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}">
+                        <i class="fas fa-angle-left me-1"></i> Anterior
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link hover-scale" href="?page={{ num }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}">
+                        {{ num }}
+                    </a>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link hover-scale" href="?page={{ page_obj.next_page_number }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}">
+                        Siguiente <i class="fas fa-angle-right ms-1"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link hover-scale" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}">
+                        Última <i class="fas fa-angle-double-right ms-1"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        
+        <div class="text-center text-muted">
+            <small>
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                ({{ page_obj.paginator.count }} reseñas en total)
+            </small>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-section mt-5">
+        <div class="hero-card text-center animate-scale-in">
+            <div class="hero-card-icon">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <h4 class="hero-card-title">¿No encuentras lo que buscas?</h4>
+            <p class="hero-card-description">
+                Explora nuestras categorías o usa la búsqueda avanzada para encontrar exactamente lo que necesitas.
+            </p>
+            
+            <div class="quick-action-buttons d-flex gap-3 justify-content-center flex-wrap">
+                <a href="{% url 'blog:categories_list' %}" class="btn btn-outline-primary hover-lift">
+                    <i class="fas fa-tags me-1"></i> Ver Categorías
+                </a>
+                <a href="{% url 'blog:search' %}" class="btn btn-outline-info hover-lift">
+                    <i class="fas fa-search me-1"></i> Búsqueda Avanzada
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'blog:create_post' %}" class="btn btn-success hover-lift">
+                    <i class="fas fa-plus me-1"></i> Crear Reseña
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.filter-card {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border: none;
+    box-shadow: var(--shadow-lg);
+}
+
+.filter-card .card-header {
+    background: var(--bg-gradient-1);
+    color: white;
+    border-bottom: none;
+}
+
+.results-summary {
+    background: white;
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.posts-grid .row {
+    margin: 0 -15px;
+}
+
+.posts-grid .col-lg-4,
+.posts-grid .col-md-6 {
+    padding: 0 15px;
+}
+
+.reading-time-badge {
+    position: absolute;
+    top: var(--space-md);
+    left: var(--space-md);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-xs);
+    backdrop-filter: blur(10px);
+}
+
+.placeholder-image {
+    height: 220px;
+    background: var(--bg-gradient-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+}
+
+.pagination-wrapper {
+    background: white;
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-xl);
+    box-shadow: var(--shadow-sm);
+}
+
+.quick-action-buttons {
+    margin-top: var(--space-lg);
+}
+
+.suggestions ul {
+    display: inline-block;
+    text-align: left;
+}
+
+@media (max-width: 768px) {
+    .section-header .section-title {
+        font-size: 2rem;
+    }
+    
+    .filter-card .card-body .row {
+        gap: 1rem;
+    }
+    
+    .results-summary .d-flex {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .quick-action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .quick-action-buttons .btn {
+        width: 100%;
+        max-width: 200px;
+    }
+}
+</style>
+{% endblock %}

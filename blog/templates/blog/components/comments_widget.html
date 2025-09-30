@@ -1,0 +1,106 @@
+<div class="comments-widget">
+    <h5 class="widget-title">
+        <i class="fas fa-comments me-2"></i>
+        Comentarios Recientes
+    </h5>
+    
+    <div class="comments-list">
+        {% for comment in recent_comments %}
+            <div class="comment-item">
+                <div class="comment-header">
+                    <div class="comment-author">
+                        <i class="fas fa-user-circle me-1"></i>
+                        {{ comment.author.get_full_name|default:comment.author.username }}
+                    </div>
+                    <small class="comment-date text-muted">
+                        {{ comment.created_at|date:"d M Y" }}
+                    </small>
+                </div>
+                
+                <div class="comment-content">
+                    <p class="mb-1">{{ comment.content|truncate_smart:80 }}</p>
+                    <a href="{{ comment.post.get_absolute_url }}" class="comment-post-link">
+                        <i class="fas fa-external-link-alt me-1"></i>
+                        {{ comment.post.title|truncate_smart:40 }}
+                    </a>
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-muted">No hay comentarios recientes.</p>
+        {% endfor %}
+    </div>
+    
+    {% if recent_comments %}
+        <div class="text-center mt-3">
+            <a href="{% url 'blog:post_list' %}" class="btn btn-outline-primary btn-sm">
+                Ver todas las reseñas
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.comments-widget {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.widget-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.comment-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comment-author {
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.875rem;
+}
+
+.comment-date {
+    font-size: 0.75rem;
+}
+
+.comment-content {
+    margin-left: 1.25rem;
+}
+
+.comment-content p {
+    color: #6c757d;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.comment-post-link {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.comment-post-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+</style>

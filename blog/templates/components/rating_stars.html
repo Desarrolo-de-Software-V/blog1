@@ -1,0 +1,41 @@
+{% load blog_extras %}
+
+<div class="rating-stars d-inline-flex align-items-center">
+    <div class="stars me-2">
+        {% for star in stars_filled %}
+            <i class="fas fa-star text-warning"></i>
+        {% endfor %}
+        {% for star in stars_empty %}
+            <i class="far fa-star text-muted"></i>
+        {% endfor %}
+    </div>
+    
+    {% if show_text %}
+    <span class="rating-text small text-muted">
+        {{ rating }}/5
+        {% if rating == 1 %}
+            - Muy malo
+        {% elif rating == 2 %}
+            - Malo
+        {% elif rating == 3 %}
+            - Regular
+        {% elif rating == 4 %}
+            - Bueno
+        {% elif rating == 5 %}
+            - Excelente
+        {% endif %}
+    </span>
+    {% endif %}
+</div>
+
+<style>
+.rating-stars .stars i {
+    font-size: 1rem;
+    margin-right: 1px;
+}
+
+.rating-stars:hover .stars i {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+</style>

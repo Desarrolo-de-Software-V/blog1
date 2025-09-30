@@ -1,0 +1,125 @@
+{% load blog_extras %}
+
+<div class="comments-widget card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-comments me-2"></i>
+            Comentarios Recientes
+        </h6>
+    </div>
+    
+    <div class="card-body p-0">
+        {% get_recent_comments 5 as recent_comments %}
+        {% for comment in recent_comments %}
+        <div class="comment-item border-bottom p-3 {% if forloop.last %}border-0{% endif %}">
+            <div class="d-flex">
+                <div class="comment-avatar me-2">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 35px; height: 35px;">
+                        <i class="fas fa-user text-white" style="font-size: 0.8rem;"></i>
+                    </div>
+                </div>
+                
+                <div class="comment-content flex-grow-1">
+                    <div class="comment-meta mb-1">
+                        <strong class="comment-author">
+                            {{ comment.author.first_name|default:comment.author.username }}
+                        </strong>
+                        <small class="text-muted ms-1">
+                            {{ comment.created_at|timesince }} ago
+                        </small>
+                    </div>
+                    
+                    <div class="comment-text mb-2">
+                        <p class="mb-1 small">{{ comment.content|truncate_smart:80 }}</p>
+                    </div>
+                    
+                    <div class="comment-post">
+                        <small class="text-muted">
+                            En: <a href="{{ comment.post.get_absolute_url }}" class="text-decoration-none">
+                                {{ comment.post.title|truncate_smart:30 }}
+                            </a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center p-3 text-muted">
+            <i class="fas fa-comment-slash fs-4 mb-2"></i>
+            <p class="mb-0 small">No hay comentarios recientes</p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if recent_comments %}
+    <div class="card-footer text-center">
+        <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Los comentarios más recientes de la comunidad
+        </small>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.comments-widget .comment-item {
+    transition: background-color 0.2s ease;
+}
+
+.comments-widget .comment-item:hover {
+    background-color: #f8f9fa;
+}
+
+.comments-widget .comment-author {
+    color: #495057;
+    font-size: 0.85rem;
+}
+
+.comments-widget .comment-text p {
+    line-height: 1.4;
+    color: #6c757d;
+}
+
+.comments-widget .comment-post a {
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.comments-widget .comment-post a:hover {
+    color: #0a58ca;
+}
+
+.comments-widget .card-header {
+    background-color: #fff8e1;
+    border-bottom: 1px solid #ffecb3;
+}
+
+.comments-widget .card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.comment-avatar {
+    flex-shrink: 0;
+}
+
+.comment-content {
+    min-width: 0; /* Para permitir que el texto se trunce correctamente */
+}
+
+@media (max-width: 576px) {
+    .comments-widget .comment-item {
+        padding: 12px 16px;
+    }
+    
+    .comment-avatar {
+        margin-right: 8px;
+    }
+    
+    .comment-avatar > div {
+        width: 30px !important;
+        height: 30px !important;
+    }
+}
+</style>

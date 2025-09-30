@@ -1,0 +1,439 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load blog_extras %}
+
+{% block title %}MovieReviews - Tu Blog de Reseñas de Películas y Anime{% endblock %}
+
+{% block content %}
+<!-- Hero section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <div class="row align-items-center min-vh-50">
+                <div class="col-lg-6 animate-fade-in-left">
+                    <h1 class="hero-title text-gradient">
+                        Bienvenido a MovieReviews
+                    </h1>
+                    <p class="hero-subtitle mb-4">
+                        Descubre las mejores reseñas de películas y anime. Comparte tus opiniones, 
+                        encuentra nuevos contenidos y conecta con otros cinéfilos.
+                    </p>
+                    <div class="hero-buttons d-flex gap-3 flex-wrap">
+                        <a href="{% url 'blog:post_list' %}" class="btn btn-primary btn-lg hover-lift">
+                            <i class="fas fa-play me-2"></i> Explorar Reseñas
+                        </a>
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'blog:create_post' %}" class="btn btn-outline-light btn-lg glass-effect">
+                            <i class="fas fa-edit me-2"></i> Escribir Reseña
+                        </a>
+                        {% else %}
+                        <a href="{% url 'blog:register' %}" class="btn btn-outline-light btn-lg glass-effect">
+                            <i class="fas fa-user-plus me-2"></i> Únete Ahora
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center animate-fade-in-right">
+                    <div class="hero-illustration">
+                        <div class="floating-cards">
+                            <div class="floating-card animate-float" style="animation-delay: 0s;">
+                                <i class="fas fa-film fs-1"></i>
+                            </div>
+                            <div class="floating-card animate-float" style="animation-delay: 1s;">
+                                <i class="fas fa-star fs-1"></i>
+                            </div>
+                            <div class="floating-card animate-float" style="animation-delay: 2s;">
+                                <i class="fas fa-heart fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container section-spacing">
+    <!-- Featured posts -->
+    {% if featured_posts %}
+    <section class="featured-section mb-5">
+        <div class="section-header text-center mb-5 animate-fade-in-up">
+            <h2 class="section-title">
+                <i class="fas fa-star text-warning me-2"></i>
+                Reseñas Destacadas
+            </h2>
+            <p class="section-subtitle text-muted">Los mejores contenidos seleccionados por nuestro equipo</p>
+        </div>
+        
+        <div class="row stagger-children">
+            {% for post in featured_posts %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="post-card post-card-featured hover-lift">
+                    <div class="post-card-image">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy">
+                        {% else %}
+                        <div class="placeholder-image">
+                            <i class="fas fa-film fs-1"></i>
+                        </div>
+                        {% endif %}
+                        <div class="post-card-overlay"></div>
+                    </div>
+                    
+                    <div class="post-card-content">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <a href="{{ post.category.get_absolute_url }}" class="category-badge {{ post.category.name|lower }}">
+                                <i class="{{ post.category.name|category_icon }} me-1"></i>
+                                {{ post.category.name }}
+                            </a>
+                            <div class="rating-stars">
+                                {% rating_stars post.rating False %}
+                            </div>
+                        </div>
+                        
+                        <h5 class="post-card-title">
+                            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                        </h5>
+                        
+                        <h6 class="post-card-movie">{{ post.movie_title }}</h6>
+                        
+                        <p class="post-card-excerpt">{{ post.excerpt|truncate_smart:100 }}</p>
+                        
+                        <div class="post-card-meta">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ post.created_at|date:"d M Y" }}
+                                </small>
+                                <small class="text-muted">
+                                    <i class="fas fa-user me-1"></i>
+                                    {{ post.author.first_name|default:post.author.username }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <a href="{{ post.get_absolute_url }}" class="btn btn-primary btn-sm w-100 btn-ripple">
+                            <i class="fas fa-eye me-1"></i> Leer Reseña
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Recent posts -->
+    <section class="recent-section mb-5">
+        <div class="section-header d-flex justify-content-between align-items-center mb-4 animate-fade-in-up">
+            <div>
+                <h2 class="section-title mb-2">
+                    <i class="fas fa-clock text-info me-2"></i>
+                    Reseñas Recientes
+                </h2>
+                <p class="text-muted mb-0">Las últimas opiniones de nuestra comunidad</p>
+            </div>
+            <a href="{% url 'blog:post_list' %}" class="btn btn-outline-primary hover-scale">
+                Ver Todas <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        
+        <div class="row stagger-children">
+            {% for post in recent_posts %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="post-card hover-lift">
+                    <div class="post-card-image">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy">
+                        {% else %}
+                        <div class="placeholder-image">
+                            <i class="fas fa-film fs-1"></i>
+                        </div>
+                        {% endif %}
+                        <div class="post-card-overlay"></div>
+                    </div>
+                    
+                    <div class="post-card-content">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <a href="{{ post.category.get_absolute_url }}" class="category-badge {{ post.category.name|lower }}">
+                                <i class="{{ post.category.name|category_icon }} me-1"></i>
+                                {{ post.category.name }}
+                            </a>
+                            <div class="rating-stars">
+                                {% rating_stars post.rating False %}
+                            </div>
+                        </div>
+                        
+                        <h5 class="post-card-title">
+                            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                        </h5>
+                        
+                        <h6 class="post-card-movie">{{ post.movie_title }}</h6>
+                        
+                        <p class="post-card-excerpt">{{ post.excerpt|truncate_smart:80 }}</p>
+                        
+                        <div class="post-card-meta">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ post.created_at|date:"d M Y" }}
+                                </small>
+                                <small class="text-muted">
+                                    <i class="fas fa-comments me-1"></i>
+                                    {{ post.comments.count }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <a href="{{ post.get_absolute_url }}" class="btn btn-outline-primary btn-sm w-100 btn-ripple">
+                            <i class="fas fa-eye me-1"></i> Leer Reseña
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="hero-card animate-bounce-in">
+                    <div class="hero-card-icon">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <h3 class="hero-card-title">¡Sé el primero!</h3>
+                    <p class="hero-card-description">
+                        Aún no hay reseñas en el blog. 
+                        {% if user.is_authenticated %}
+                        ¡Sé el primero en compartir tu opinión!
+                        {% else %}
+                        Regístrate para escribir la primera reseña.
+                        {% endif %}
+                    </p>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'blog:create_post' %}" class="btn btn-primary btn-lg hover-lift">
+                        <i class="fas fa-plus me-2"></i> Escribir Primera Reseña
+                    </a>
+                    {% else %}
+                    <a href="{% url 'blog:register' %}" class="btn btn-primary btn-lg hover-lift">
+                        <i class="fas fa-user-plus me-2"></i> Registrarse
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Categories section -->
+    <section class="categories-section mb-5">
+        <div class="section-header text-center mb-5 animate-fade-in-up">
+            <h2 class="section-title">
+                <i class="fas fa-th-large text-success me-2"></i>
+                Explora por Categorías
+            </h2>
+            <p class="section-subtitle text-muted">Encuentra el contenido perfecto para ti</p>
+        </div>
+        
+        <div class="row stagger-children">
+            {% for category in categories %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <a href="{{ category.get_absolute_url }}" class="text-decoration-none">
+                    <div class="hero-card interactive-card">
+                        <div class="hero-card-icon bg-gradient-{{ forloop.counter }}">
+                            <i class="{{ category.name|category_icon }}"></i>
+                        </div>
+                        <h5 class="hero-card-title">{{ category.name }}</h5>
+                        <p class="hero-card-description">
+                            {{ category.post_count|format_number }} reseña{{ category.post_count|pluralize }}
+                        </p>
+                        <div class="category-progress">
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar progress-bar-animated bg-gradient-{{ forloop.counter }}" 
+                                     data-width="{% widthratio category.post_count categories.0.post_count 100 %}%"
+                                     style="width: 0;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="hero-card animate-bounce-in">
+                    <div class="hero-card-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <h5 class="hero-card-title">Categorías en preparación</h5>
+                    <p class="hero-card-description">Pronto tendremos categorías organizadas para ti</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section mb-5">
+        <div class="row stagger-children">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card hover-lift">
+                    <div class="stats-number counter" data-target="{{ categories|length }}" data-duration="2000">0</div>
+                    <div class="stats-label">Categorías</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card success hover-lift">
+                    <div class="stats-number counter" data-target="{% for cat in categories %}{{ cat.post_count }}{% if not forloop.last %}+{% endif %}{% endfor %}" data-duration="2000">0</div>
+                    <div class="stats-label">Reseñas Totales</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card warning hover-lift">
+                    <div class="stats-number counter" data-target="5" data-duration="2000">0</div>
+                    <div class="stats-label">Calidad Promedio</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card danger hover-lift">
+                    <div class="stats-number">∞</div>
+                    <div class="stats-label">Diversión Garantizada</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="hero-card text-center animate-scale-in" style="background: var(--bg-gradient-1); color: white;">
+            <div class="hero-card-icon" style="background: rgba(255,255,255,0.2);">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <h3 class="hero-card-title text-white">¿Listo para compartir tu pasión?</h3>
+            <p class="hero-card-description text-white-50">
+                Únete a nuestra comunidad de cinéfilos y comparte tus opiniones sobre las mejores películas y anime.
+            </p>
+            
+            <div class="cta-buttons d-flex gap-3 justify-content-center">
+                {% if user.is_authenticated %}
+                <a href="{% url 'blog:create_post' %}" class="btn btn-light btn-lg hover-lift">
+                    <i class="fas fa-plus me-2"></i> Escribir Reseña
+                </a>
+                <a href="{% url 'blog:user_posts' %}" class="btn btn-outline-light btn-lg glass-effect">
+                    <i class="fas fa-list me-2"></i> Mis Reseñas
+                </a>
+                {% else %}
+                <a href="{% url 'blog:register' %}" class="btn btn-light btn-lg hover-lift">
+                    <i class="fas fa-user-plus me-2"></i> Registrarse Gratis
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg glass-effect">
+                    <i class="fas fa-sign-in-alt me-2"></i> Iniciar Sesión
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+.min-vh-50 { min-height: 50vh; }
+
+.floating-cards {
+    position: relative;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.floating-card {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.floating-card:nth-child(1) {
+    top: 0;
+    left: 50px;
+}
+
+.floating-card:nth-child(2) {
+    top: 100px;
+    right: 0;
+}
+
+.floating-card:nth-child(3) {
+    bottom: 50px;
+    left: 100px;
+}
+
+.section-header .section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.placeholder-image {
+    height: 200px;
+    background: var(--bg-gradient-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+}
+
+.bg-gradient-1 { background: var(--bg-gradient-1) !important; }
+.bg-gradient-2 { background: var(--bg-gradient-2) !important; }
+.bg-gradient-3 { background: var(--bg-gradient-3) !important; }
+.bg-gradient-4 { background: var(--bg-gradient-4) !important; }
+
+.category-progress {
+    margin-top: 1rem;
+}
+
+.cta-buttons {
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .floating-cards {
+        height: 200px;
+    }
+    
+    .floating-card {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .section-header .section-title {
+        font-size: 2rem;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

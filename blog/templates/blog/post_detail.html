@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load blog_extras %}
+
+{% block title %}{{ post.title }} - MovieReviews{% endblock %}
+
+{% block extra_css %}
+<style>
+.post-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 60px 0;
+}
+
+.post-meta {
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.rating-large {
+    font-size: 2rem;
+    color: #ffc107;
+}
+
+.post-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+}
+
+.post-content h2, .post-content h3 {
+    color: #2c3e50;
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+.post-content p {
+    margin-bottom: 20px;
+}
+
+.comment-form {
+    background-color: #f8f9fa;
+    padding: 30px;
+    border-radius: 10px;
+    border: 2px solid #dee2e6;
+}
+
+.comment-item {
+    background-color: white;
+    border-left: 4px solid #2c3e50;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 0 10px 10px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.comment-item.reply {
+    margin-left: 40px;
+    border-left-color: #e74c3c;
+    background-color: #f8f9fa;
+}
+
+.comment-author {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.comment-date {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.related-posts .card {
+    transition: all 0.3s ease;
+}
+
+.related-posts .card:hover {
+    transform: scale(1.02);
+}
+
+.action-buttons {
+    position: sticky;
+    top: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Post Header -->
+<div class="post-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'blog:home' %}" class="text-white-50">Inicio</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{{ post.category.get_absolute_url }}" class="text-white-50">
+                                {{ post.category.name }}
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">
+                            {{ post.title|truncatewords:3 }}
+                        </li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-5 fw-bold mb-3">{{ post.title }}</h1>
+                <h2 class="h4 text-white-50 mb-4">{{ post.movie_title }}</h2>
+                
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                        <i class="fas fa-user"></i>
+                        {{ post.author.first_name|default:post.author.username }}
+                    </span>
+                    <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                        <i class="fas fa-calendar"></i>
+                        {{ post.created_at|date:"d M Y" }}
+                    </span>
+                    <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                        <i class="fas fa-comments"></i>
+                        {{ comments.count }} comentario{{ comments.count|pluralize }}
+                    </span>
+                    <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                        <i class="fas fa-clock"></i>
+                        {{ post.content|reading_time }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                {% if post.poster_image %}
+                <div class="text-center">
+                    <img src="{{ post.poster_image.url }}" alt="{{ post.movie_title }}" 
+                         class="img-fluid rounded shadow" style="max-height: 300px;">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Main content -->
+        <div class="col-lg-8">
+            <!-- Post metadata -->
+            <div class="post-meta">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-info-circle"></i> Información</h5>
+                        <ul class="list-unstyled">
+                            {% if post.director %}
+                            <li><strong>Director:</strong> {{ post.director }}</li>
+                            {% endif %}
+                            <li><strong>Año:</strong> {{ post.release_year }}</li>
+                            <li><strong>Categoría:</strong> 
+                                <a href="{{ post.category.get_absolute_url }}" class="text-decoration-none">
+                                    {{ post.category.name }}
+                                </a>
+                            </li>
+                            {% if post.subcategory %}
+                            <li><strong>Subcategoría:</strong> 
+                                <a href="{{ post.subcategory.get_absolute_url }}" class="text-decoration-none">
+                                    {{ post.subcategory.name }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <h5><i class="fas fa-star"></i> Puntuación</h5>
+                        <div class="mb-2">
+                            {% rating_stars post.rating %}
+                        </div>
+                        <p class="mb-0">{{ post.rating }}/5 estrellas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured image -->
+            {% if post.featured_image %}
+            <div class="text-center mb-4">
+                <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" 
+                     class="img-fluid rounded shadow">
+            </div>
+            {% endif %}
+
+            <!-- Post content -->
+            <div class="post-content">
+                {{ post.content|linebreaks }}
+            </div>
+
+            <!-- Tags and sharing -->
+            <div class="border-top pt-4 mt-5">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h6>Etiquetas:</h6>
+                        <a href="{{ post.category.get_absolute_url }}" class="category-badge me-2">
+                            {{ post.category.name }}
+                        </a>
+                        {% if post.subcategory %}
+                        <a href="{{ post.subcategory.get_absolute_url }}" class="category-badge">
+                            {{ post.subcategory.name }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 text-end">
+                        {% social_share post request %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments section -->
+            <div class="comments-section mt-5">
+                <h3 class="mb-4">
+                    <i class="fas fa-comments"></i>
+                    Comentarios ({{ comments.count }})
+                </h3>
+
+                <!-- Comment form -->
+                {% if user.is_authenticated %}
+                <div class="comment-form mb-5">
+                    <h5><i class="fas fa-edit"></i> Deja tu comentario</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ comment_form.content }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Publicar Comentario
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <a href="{% url 'login' %}">Inicia sesión</a> o 
+                    <a href="{% url 'blog:register' %}">regístrate</a> para comentar.
+                </div>
+                {% endif %}
+
+                <!-- Comments list -->
+                {% for comment in comments %}
+                <div class="comment-item">
+                    <div class="comment-author">
+                        <i class="fas fa-user-circle"></i>
+                        {{ comment.author.first_name|default:comment.author.username }}
+                    </div>
+                    <div class="comment-date mb-2">
+                        <i class="fas fa-clock"></i>
+                        {{ comment.created_at|date:"d M Y - H:i" }}
+                    </div>
+                    <div class="comment-content">
+                        {{ comment.content|linebreaks }}
+                    </div>
+                    
+                    <!-- Replies -->
+                    {% for reply in comment.replies.all %}
+                    <div class="comment-item reply mt-3">
+                        <div class="comment-author">
+                            <i class="fas fa-reply"></i>
+                            {{ reply.author.first_name|default:reply.author.username }}
+                        </div>
+                        <div class="comment-date mb-2">
+                            <i class="fas fa-clock"></i>
+                            {{ reply.created_at|date:"d M Y - H:i" }}
+                        </div>
+                        <div class="comment-content">
+                            {{ reply.content|linebreaks }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% empty %}
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-comment-slash fs-1 mb-3"></i>
+                    <h5>No hay comentarios aún</h5>
+                    <p>¡Sé el primero en comentar esta reseña!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Action buttons -->
+            {% if user == post.author %}
+            <div class="action-buttons mb-4">
+                <h6><i class="fas fa-cog"></i> Acciones</h6>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'blog:edit_post' post.slug %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Editar Reseña
+                    </a>
+                    <a href="{% url 'blog:delete_post' post.slug %}" class="btn btn-outline-danger">
+                        <i class="fas fa-trash"></i> Eliminar Reseña
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Related posts -->
+            {% if related_posts %}
+            <div class="related-posts mb-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-film"></i>
+                    Reseñas Relacionadas
+                </h5>
+                {% for related_post in related_posts %}
+                <div class="card mb-3">
+                    {% if related_post.featured_image %}
+                    <img src="{{ related_post.featured_image.url }}" 
+                         class="card-img-top" alt="{{ related_post.title }}" 
+                         style="height: 120px; object-fit: cover;">
+                    {% endif %}
+                    <div class="card-body p-3">
+                        <h6 class="card-title">
+                            <a href="{{ related_post.get_absolute_url }}" class="text-decoration-none">
+                                {{ related_post.title|truncatewords:4 }}
+                            </a>
+                        </h6>
+                        <p class="card-text small text-muted mb-2">
+                            {{ related_post.movie_title }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                {{ related_post.created_at|date:"M d" }}
+                            </small>
+                            <span class="rating">{{ related_post.rating_stars }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Author info -->
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-circle fs-1 text-primary mb-3"></i>
+                    <h6>Escrito por</h6>
+                    <h5>{{ post.author.first_name|default:post.author.username }}</h5>
+                    {% if post.author.first_name and post.author.last_name %}
+                    <p class="text-muted">{{ post.author.first_name }} {{ post.author.last_name }}</p>
+                    {% endif %}
+                    <small class="text-muted">
+                        <i class="fas fa-calendar"></i>
+                        Miembro desde {{ post.author.date_joined|date:"M Y" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

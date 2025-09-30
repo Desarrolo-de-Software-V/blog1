@@ -1,0 +1,468 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ subcategory.name }} - {{ category.name }} - MovieReviews{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Subcategory Header -->
+    <div class="subcategory-header mb-5">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'blog:home' %}" class="text-decoration-none">
+                                <i class="fas fa-home"></i> Inicio
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'blog:categories_list' %}" class="text-decoration-none">
+                                Categorías
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{{ category.get_absolute_url }}" class="text-decoration-none">
+                                {{ category.name }}
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            {{ subcategory.name }}
+                        </li>
+                    </ol>
+                </nav>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <span class="badge bg-primary fs-6 me-3">{{ category.name }}</span>
+                    <i class="fas fa-chevron-right text-muted me-3"></i>
+                    <h1 class="display-5 fw-bold text-secondary mb-0">
+                        <i class="fas fa-tag me-2"></i>
+                        {{ subcategory.name }}
+                    </h1>
+                </div>
+                
+                {% if subcategory.description %}
+                <p class="lead text-muted mb-3">{{ subcategory.description }}</p>
+                {% endif %}
+                
+                <div class="subcategory-stats">
+                    <span class="badge bg-success fs-6 me-2">
+                        <i class="fas fa-file-alt"></i>
+                        {{ page_obj.paginator.count }} reseña{{ page_obj.paginator.count|pluralize }}
+                    </span>
+                    
+                    <span class="badge bg-info fs-6">
+                        <i class="fas fa-clock"></i>
+                        Última actualización: {{ posts.first.updated_at|date:"d M Y"|default:"No disponible" }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <i class="fas fa-sitemap fs-1 text-info mb-3"></i>
+                        <h6>Navegación Rápida</h6>
+                        <div class="d-flex flex-column gap-2">
+                            <a href="{{ category.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-arrow-left"></i> Volver a {{ category.name }}
+                            </a>
+                            {% if user.is_authenticated %}
+                            <a href="{% url 'blog:create_post' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Nueva Reseña
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Subcategories -->
+    {% if category.subcategories.count > 1 %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h5 class="mb-3">
+                <i class="fas fa-tags me-2"></i>
+                Otras subcategorías en {{ category.name }}
+            </h5>
+            <div class="related-subcategories">
+                {% for related_sub in category.subcategories.all %}
+                {% if related_sub != subcategory %}
+                <a href="{{ related_sub.get_absolute_url }}" 
+                   class="subcategory-chip text-decoration-none {% if related_sub == subcategory %}active{% endif %}">
+                    <span class="badge bg-light text-dark border">
+                        {{ related_sub.name }}
+                        <small>({{ related_sub.posts.count }})</small>
+                    </span>
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filter and Sort -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Buscar en {{ subcategory.name }}</label>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Título, película, director..." 
+                                   value="{{ request.GET.search }}">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label class="form-label">Ordenar por</label>
+                            <select name="sort" class="form-control">
+                                <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>
+                                    Más recientes
+                                </option>
+                                <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>
+                                    Más antiguos
+                                </option>
+                                <option value="-rating" {% if request.GET.sort == '-rating' %}selected{% endif %}>
+                                    Mejor puntuación
+                                </option>
+                                <option value="title" {% if request.GET.sort == 'title' %}selected{% endif %}>
+                                    Título A-Z
+                                </option>
+                                <option value="-release_year" {% if request.GET.sort == '-release_year' %}selected{% endif %}>
+                                    Año más reciente
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label class="form-label">Puntuación</label>
+                            <select name="rating" class="form-control">
+                                <option value="">Todas</option>
+                                <option value="5" {% if request.GET.rating == '5' %}selected{% endif %}>⭐⭐⭐⭐⭐</option>
+                                <option value="4" {% if request.GET.rating == '4' %}selected{% endif %}>⭐⭐⭐⭐</option>
+                                <option value="3" {% if request.GET.rating == '3' %}selected{% endif %}>⭐⭐⭐</option>
+                                <option value="2" {% if request.GET.rating == '2' %}selected{% endif %}>⭐⭐</option>
+                                <option value="1" {% if request.GET.rating == '1' %}selected{% endif %}>⭐</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter"></i> Filtrar
+                                </button>
+                                <a href="{% url 'blog:subcategory_posts' category.slug subcategory.slug %}" 
+                                   class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Posts Grid -->
+    <div class="row">
+        {% for post in posts %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card subcategory-post-card h-100">
+                <!-- Image -->
+                {% if post.featured_image %}
+                <div class="position-relative">
+                    <img src="{{ post.featured_image.url }}" class="card-img-top" alt="{{ post.title }}">
+                    {% if post.featured %}
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <span class="badge bg-danger">DESTACADO</span>
+                    </div>
+                    {% endif %}
+                    <div class="position-absolute bottom-0 end-0 m-2">
+                        <span class="badge bg-dark bg-opacity-75">{{ subcategory.name }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center position-relative" 
+                     style="height: 200px;">
+                    <i class="fas fa-film fs-1 text-muted"></i>
+                    {% if post.featured %}
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <span class="badge bg-danger">DESTACADO</span>
+                    </div>
+                    {% endif %}
+                    <div class="position-absolute bottom-0 end-0 m-2">
+                        <span class="badge bg-dark bg-opacity-75">{{ subcategory.name }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Content -->
+                <div class="card-body d-flex flex-column">
+                    <!-- Rating -->
+                    <div class="text-center mb-2">
+                        <div class="rating fs-5">{{ post.rating_stars }}</div>
+                    </div>
+                    
+                    <!-- Title and movie -->
+                    <h5 class="card-title">
+                        <a href="{{ post.get_absolute_url }}" class="text-decoration-none">
+                            {{ post.title }}
+                        </a>
+                    </h5>
+                    
+                    <h6 class="text-muted mb-2">{{ post.movie_title }}</h6>
+                    
+                    <!-- Excerpt -->
+                    <p class="card-text flex-grow-1">{{ post.excerpt|truncatewords:20 }}</p>
+                    
+                    <!-- Meta info -->
+                    <div class="card-meta">
+                        <div class="row text-center mb-2">
+                            <div class="col-4">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ post.release_year }}
+                                </small>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted">
+                                    <i class="fas fa-user"></i>
+                                    {{ post.author.first_name|default:post.author.username|truncatechars:8 }}
+                                </small>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted">
+                                    <i class="fas fa-comments"></i>
+                                    {{ post.comments.count }}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        {% if post.director %}
+                        <div class="text-center">
+                            <small class="text-muted">
+                                <i class="fas fa-video"></i>
+                                {{ post.director|truncatewords:2 }}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="card-footer bg-transparent">
+                    <a href="{{ post.get_absolute_url }}" class="btn btn-primary btn-sm w-100">
+                        <i class="fas fa-eye"></i> Leer Reseña Completa
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Empty state -->
+        <div class="col-12">
+            <div class="text-center py-5">
+                {% if request.GET.search or request.GET.rating %}
+                <i class="fas fa-search-minus fs-1 text-muted mb-4"></i>
+                <h3 class="text-muted">No se encontraron reseñas</h3>
+                <p class="text-muted mb-4">
+                    No hay reseñas en {{ subcategory.name }} que coincidan con los filtros aplicados.
+                </p>
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{% url 'blog:subcategory_posts' category.slug subcategory.slug %}" 
+                       class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> Ver Todas
+                    </a>
+                    <a href="{{ category.get_absolute_url }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a {{ category.name }}
+                    </a>
+                </div>
+                {% else %}
+                <i class="fas fa-tag fs-1 text-muted mb-4"></i>
+                <h3 class="text-muted">Aún no hay reseñas en {{ subcategory.name }}</h3>
+                <p class="text-muted mb-4">
+                    ¡Sé el primero en escribir una reseña en esta subcategoría!
+                </p>
+                
+                <div class="d-flex gap-3 justify-content-center">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'blog:create_post' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Escribir Primera Reseña
+                    </a>
+                    {% else %}
+                    <a href="{% url 'blog:register' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Registrarse
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{{ category.get_absolute_url }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Explorar {{ category.name }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <nav aria-label="Navegación de páginas">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Primera
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Siguiente
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Última
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statistics and CTA -->
+    <div class="row mt-5">
+        <div class="col-lg-8">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Estadísticas de {{ subcategory.name }}
+                    </h5>
+                    
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h4>{{ page_obj.paginator.count }}</h4>
+                            <small>Reseñas Totales</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h4>
+                                {% for post in posts %}{% if post.rating >= 4 %}1{% endif %}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}
+                            </h4>
+                            <small>Muy Buenas (4+ ⭐)</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h4>
+                                {{ posts|length|default:0 }}
+                            </h4>
+                            <small>En Esta Página</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h4>
+                                {% for post in posts %}{{ post.comments.count }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}
+                            </h4>
+                            <small>Comentarios</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5>¿Te encanta {{ subcategory.name }}?</h5>
+                    <p class="mb-3">Comparte tu experiencia con la comunidad</p>
+                    
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'blog:create_post' %}" class="btn btn-light">
+                        <i class="fas fa-plus"></i> Escribir Reseña
+                    </a>
+                    {% else %}
+                    <a href="{% url 'blog:register' %}" class="btn btn-light">
+                        <i class="fas fa-user-plus"></i> Únete Ahora
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.subcategory-header {
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.05) 0%, rgba(19, 132, 150, 0.05) 100%);
+    border-radius: 15px;
+    padding: 30px;
+    border-left: 5px solid #17a2b8;
+}
+
+.related-subcategories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.subcategory-chip .badge {
+    transition: all 0.3s ease;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+.subcategory-chip:hover .badge {
+    background-color: #17a2b8 !important;
+    color: white !important;
+    transform: translateY(-2px);
+}
+
+.subcategory-post-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.subcategory-post-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.rating {
+    color: #ffc107;
+}
+
+.card-meta {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+}
+
+@media (max-width: 768px) {
+    .subcategory-header {
+        text-align: center;
+    }
+    
+    .related-subcategories {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}

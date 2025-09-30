@@ -1,0 +1,440 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ category.name }} - MovieReviews{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Category Header -->
+    <div class="category-header mb-5">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'blog:home' %}" class="text-decoration-none">
+                                <i class="fas fa-home"></i> Inicio
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'blog:categories_list' %}" class="text-decoration-none">
+                                Categorías
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            {{ category.name }}
+                        </li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-4 fw-bold text-primary mb-3">
+                    {% if 'anime' in category.name|lower %}
+                        <i class="fas fa-dragon text-warning"></i>
+                    {% elif 'película' in category.name|lower or 'movie' in category.name|lower %}
+                        <i class="fas fa-film text-primary"></i>
+                    {% elif 'serie' in category.name|lower %}
+                        <i class="fas fa-tv text-info"></i>
+                    {% elif 'documental' in category.name|lower %}
+                        <i class="fas fa-book-open text-success"></i>
+                    {% else %}
+                        <i class="fas fa-folder-open text-secondary"></i>
+                    {% endif %}
+                    {{ category.name }}
+                </h1>
+                
+                {% if category.description %}
+                <p class="lead text-muted mb-3">{{ category.description }}</p>
+                {% endif %}
+                
+                <div class="category-stats">
+                    <span class="badge bg-primary fs-6 me-2">
+                        <i class="fas fa-file-alt"></i>
+                        {{ page_obj.paginator.count }} reseña{{ page_obj.paginator.count|pluralize }}
+                    </span>
+                    
+                    {% if category.subcategories.exists %}
+                    <span class="badge bg-success fs-6">
+                        <i class="fas fa-tags"></i>
+                        {{ category.subcategories.count }} subcategoría{{ category.subcategories.count|pluralize }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-lg-4 text-center">
+                <div class="category-icon-large">
+                    {% if 'anime' in category.name|lower %}
+                        <i class="fas fa-dragon display-1 text-warning"></i>
+                    {% elif 'película' in category.name|lower or 'movie' in category.name|lower %}
+                        <i class="fas fa-film display-1 text-primary"></i>
+                    {% elif 'serie' in category.name|lower %}
+                        <i class="fas fa-tv display-1 text-info"></i>
+                    {% elif 'documental' in category.name|lower %}
+                        <i class="fas fa-book-open display-1 text-success"></i>
+                    {% else %}
+                        <i class="fas fa-folder-open display-1 text-secondary"></i>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subcategories -->
+    {% if category.subcategories.exists %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h5 class="mb-3">
+                <i class="fas fa-sitemap me-2"></i>
+                Subcategorías
+            </h5>
+            <div class="subcategories-grid">
+                {% for subcategory in category.subcategories.all %}
+                <a href="{{ subcategory.get_absolute_url }}" class="subcategory-item text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-tag fs-3 text-primary mb-2"></i>
+                            <h6 class="card-title">{{ subcategory.name }}</h6>
+                            <small class="text-muted">
+                                {{ subcategory.posts.count }} reseña{{ subcategory.posts.count|pluralize }}
+                            </small>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filter and Sort -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Buscar en {{ category.name }}</label>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Título, película, director..." 
+                                   value="{{ request.GET.search }}">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label class="form-label">Ordenar por</label>
+                            <select name="sort" class="form-control">
+                                <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>
+                                    Más recientes
+                                </option>
+                                <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>
+                                    Más antiguos
+                                </option>
+                                <option value="-rating" {% if request.GET.sort == '-rating' %}selected{% endif %}>
+                                    Mejor puntuación
+                                </option>
+                                <option value="title" {% if request.GET.sort == 'title' %}selected{% endif %}>
+                                    Título A-Z
+                                </option>
+                                <option value="-release_year" {% if request.GET.sort == '-release_year' %}selected{% endif %}>
+                                    Año más reciente
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label class="form-label">Puntuación</label>
+                            <select name="rating" class="form-control">
+                                <option value="">Todas</option>
+                                <option value="5" {% if request.GET.rating == '5' %}selected{% endif %}>⭐⭐⭐⭐⭐</option>
+                                <option value="4" {% if request.GET.rating == '4' %}selected{% endif %}>⭐⭐⭐⭐</option>
+                                <option value="3" {% if request.GET.rating == '3' %}selected{% endif %}>⭐⭐⭐</option>
+                                <option value="2" {% if request.GET.rating == '2' %}selected{% endif %}>⭐⭐</option>
+                                <option value="1" {% if request.GET.rating == '1' %}selected{% endif %}>⭐</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter"></i> Filtrar
+                                </button>
+                                <a href="{% url 'blog:category_posts' category.slug %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Posts Grid -->
+    <div class="row">
+        {% for post in posts %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card category-post-card h-100">
+                <!-- Image -->
+                {% if post.featured_image %}
+                <div class="position-relative">
+                    <img src="{{ post.featured_image.url }}" class="card-img-top" alt="{{ post.title }}">
+                    {% if post.featured %}
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <span class="badge bg-danger">DESTACADO</span>
+                    </div>
+                    {% endif %}
+                    {% if post.subcategory %}
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-secondary">{{ post.subcategory.name }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center position-relative" 
+                     style="height: 200px;">
+                    <i class="fas fa-film fs-1 text-muted"></i>
+                    {% if post.featured %}
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <span class="badge bg-danger">DESTACADO</span>
+                    </div>
+                    {% endif %}
+                    {% if post.subcategory %}
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-secondary">{{ post.subcategory.name }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Content -->
+                <div class="card-body d-flex flex-column">
+                    <!-- Rating -->
+                    <div class="text-center mb-2">
+                        <div class="rating fs-5">{{ post.rating_stars }}</div>
+                    </div>
+                    
+                    <!-- Title and movie -->
+                    <h5 class="card-title">
+                        <a href="{{ post.get_absolute_url }}" class="text-decoration-none">
+                            {{ post.title }}
+                        </a>
+                    </h5>
+                    
+                    <h6 class="text-muted mb-2">{{ post.movie_title }}</h6>
+                    
+                    <!-- Excerpt -->
+                    <p class="card-text flex-grow-1">{{ post.excerpt|truncatewords:20 }}</p>
+                    
+                    <!-- Meta info -->
+                    <div class="card-meta">
+                        <div class="row text-center mb-2">
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ post.release_year }}
+                                </small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-user"></i>
+                                    {{ post.author.first_name|default:post.author.username }}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        {% if post.director %}
+                        <div class="text-center mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-video"></i>
+                                {{ post.director|truncatewords:3 }}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ post.get_absolute_url }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-eye"></i> Leer Reseña
+                        </a>
+                        <small class="text-muted">
+                            <i class="fas fa-comments"></i>
+                            {{ post.comments.count }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Empty state -->
+        <div class="col-12">
+            <div class="text-center py-5">
+                {% if request.GET.search or request.GET.rating %}
+                <i class="fas fa-search-minus fs-1 text-muted mb-4"></i>
+                <h3 class="text-muted">No se encontraron reseñas</h3>
+                <p class="text-muted mb-4">
+                    No hay reseñas en {{ category.name }} que coincidan con los filtros aplicados.
+                </p>
+                <a href="{% url 'blog:category_posts' category.slug %}" class="btn btn-outline-primary">
+                    <i class="fas fa-list"></i> Ver Todas las Reseñas de {{ category.name }}
+                </a>
+                {% else %}
+                <i class="fas fa-file-alt fs-1 text-muted mb-4"></i>
+                <h3 class="text-muted">Aún no hay reseñas en {{ category.name }}</h3>
+                <p class="text-muted mb-4">
+                    ¡Sé el primero en escribir una reseña en esta categoría!
+                </p>
+                {% if user.is_authenticated %}
+                <a href="{% url 'blog:create_post' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Escribir Primera Reseña
+                </a>
+                {% else %}
+                <a href="{% url 'blog:register' %}" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Registrarse para Escribir
+                </a>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <nav aria-label="Navegación de páginas">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Primera
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Siguiente
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Última
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Call to Action -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body text-center py-4">
+                    <h4>¿Te gusta {{ category.name }}?</h4>
+                    <p class="text-muted mb-3">
+                        Comparte tu propia reseña y ayuda a otros a descubrir grandes contenidos.
+                    </p>
+                    
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'blog:create_post' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Escribir Reseña en {{ category.name }}
+                    </a>
+                    {% else %}
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="{% url 'blog:register' %}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Registrarse
+                        </a>
+                        <a href="{% url 'login' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.category-header {
+    background: linear-gradient(135deg, rgba(44, 62, 80, 0.05) 0%, rgba(52, 73, 94, 0.05) 100%);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.category-icon-large {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.category-icon-large:hover {
+    opacity: 1;
+}
+
+.subcategories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.subcategory-item .card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.subcategory-item .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.category-post-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.category-post-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.rating {
+    color: #ffc107;
+}
+
+.card-meta {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+}
+
+@media (max-width: 768px) {
+    .category-header {
+        text-align: center;
+    }
+    
+    .subcategories-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+    }
+}
+</style>
+{% endblock %}

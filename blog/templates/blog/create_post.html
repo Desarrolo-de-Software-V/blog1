@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+
+{% block title %}Escribir Nueva Reseña - MovieReviews{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-section {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.form-section h4 {
+    color: #2c3e50;
+    border-bottom: 2px solid #e74c3c;
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+}
+
+.form-control:focus {
+    border-color: #2c3e50;
+    box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
+}
+
+.image-preview {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-top: 10px;
+}
+
+.help-text {
+    background-color: #e8f4fd;
+    border-left: 4px solid #2c3e50;
+    padding: 15px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 20px;
+}
+
+.required-field {
+    color: #e74c3c;
+}
+
+.char-count {
+    font-size: 0.85rem;
+    color: #666;
+    text-align: right;
+}
+
+.sticky-sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.preview-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Main form -->
+        <div class="col-lg-8">
+            <div class="text-center mb-4">
+                <h1 class="display-5 fw-bold text-primary">
+                    <i class="fas fa-edit"></i>
+                    Escribir Nueva Reseña
+                </h1>
+                <p class="lead text-muted">
+                    Comparte tu opinión sobre películas y anime con la comunidad
+                </p>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="post-form">
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h4><i class="fas fa-info-circle"></i> Información Básica</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Título de tu reseña <span class="required-field">*</span>
+                            </label>
+                            {{ form.title }}
+                            <div class="form-text">Un título atractivo para tu reseña</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Película/Anime <span class="required-field">*</span>
+                            </label>
+                            {{ form.movie_title }}
+                            <div class="form-text">Nombre de la película o anime que reseñas</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Director</label>
+                            {{ form.director }}
+                            <div class="form-text">Director de la película (opcional)</div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">
+                                Año de estreno <span class="required-field">*</span>
+                            </label>
+                            {{ form.release_year }}
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">
+                                Tu puntuación <span class="required-field">*</span>
+                            </label>
+                            {{ form.rating }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="form-section">
+                    <h4><i class="fas fa-tags"></i> Categorización</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Categoría <span class="required-field">*</span>
+                            </label>
+                            {{ form.category }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subcategoría</label>
+                            {{ form.subcategory }}
+                            <div class="form-text">Se cargará según la categoría seleccionada</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="form-section">
+                    <h4><i class="fas fa-pen-fancy"></i> Contenido de la Reseña</h4>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Resumen/Extracto <span class="required-field">*</span>
+                        </label>
+                        {{ form.excerpt }}
+                        <div class="char-count">
+                            <span id="excerpt-count">0</span>/300 caracteres
+                        </div>
+                        <div class="form-text">Breve descripción que aparecerá en las listas</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Reseña completa <span class="required-field">*</span>
+                        </label>
+                        {{ form.content }}
+                        <div class="form-text">Escribe tu reseña detallada aquí</div>
+                    </div>
+                    
+                    <div class="help-text">
+                        <h6><i class="fas fa-lightbulb"></i> Consejos para escribir una buena reseña:</h6>
+                        <ul class="mb-0">
+                            <li>Menciona qué te gustó y qué no sin spoilers importantes</li>
+                            <li>Habla sobre la actuación, dirección, efectos especiales, etc.</li>
+                            <li>Explica por qué recomendarías o no esta película/anime</li>
+                            <li>Sé honesto pero respetuoso con las opiniones diferentes</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Images -->
+                <div class="form-section">
+                    <h4><i class="fas fa-images"></i> Imágenes</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Imagen destacada</label>
+                            {{ form.featured_image }}
+                            <div class="form-text">Imagen principal de la reseña</div>
+                            <div id="featured-preview"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Poster de la película</label>
+                            {{ form.poster_image }}
+                            <div class="form-text">Cartel oficial de la película/anime</div>
+                            <div id="poster-preview"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEO and Publishing -->
+                <div class="form-section">
+                    <h4><i class="fas fa-cog"></i> Configuración</h4>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Meta descripción (SEO)</label>
+                        {{ form.meta_description }}
+                        <div class="form-text">Descripción para motores de búsqueda (opcional)</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.published }}
+                                <label class="form-check-label" for="{{ form.published.id_for_label }}">
+                                    Publicar inmediatamente
+                                </label>
+                                <div class="form-text">Si no está marcado, se guardará como borrador</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.featured }}
+                                <label class="form-check-label" for="{{ form.featured.id_for_label }}">
+                                    Marcar como destacado
+                                </label>
+                                <div class="form-text">Aparecerá en la sección de destacados</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit buttons -->
+                <div class="form-section">
+                    <div class="d-flex gap-3 justify-content-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Guardar Reseña
+                        </button>
+                        <a href="{% url 'blog:home' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="sticky-sidebar">
+                <!-- Help card -->
+                <div class="preview-card mb-4">
+                    <h5><i class="fas fa-question-circle"></i> Ayuda</h5>
+                    <div class="accordion" id="helpAccordion">
+                        <div class="accordion-item">
+                            <h6 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#help1">
+                                    ¿Cómo escribir una buena reseña?
+                                </button>
+                            </h6>
+                            <div id="help1" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body small">
+                                    <ul>
+                                        <li>Sé específico en tus comentarios</li>
+                                        <li>Evita spoilers importantes</li>
+                                        <li>Menciona aspectos técnicos</li>
+                                        <li>Explica tu puntuación</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h6 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#help2">
+                                    ¿Qué imágenes usar?
+                                </button>
+                            </h6>
+                            <div id="help2" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body small">
+                                    <ul>
+                                        <li>Usa imágenes de alta calidad</li>
+                                        <li>Respeta los derechos de autor</li>
+                                        <li>El poster debe ser el oficial</li>
+                                        <li>Evita imágenes con spoilers</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick tips -->
+                <div class="preview-card">
+                    <h6><i class="fas fa-star"></i> Consejos Rápidos</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success"></i> Usa un título descriptivo</li>
+                        <li><i class="fas fa-check text-success"></i> Selecciona la categoría correcta</li>
+                        <li><i class="fas fa-check text-success"></i> Revisa la ortografía</li>
+                        <li><i class="fas fa-check text-success"></i> Añade imágenes relevantes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Character count for excerpt
+    const excerptField = document.getElementById('{{ form.excerpt.id_for_label }}');
+    const excerptCount = document.getElementById('excerpt-count');
+    
+    function updateExcerptCount() {
+        const length = excerptField.value.length;
+        excerptCount.textContent = length;
+        excerptCount.style.color = length > 300 ? '#e74c3c' : '#666';
+    }
+    
+    excerptField.addEventListener('input', updateExcerptCount);
+    updateExcerptCount();
+    
+    // Image previews
+    function setupImagePreview(inputId, previewId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" class="image-preview" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    setupImagePreview('{{ form.featured_image.id_for_label }}', 'featured-preview');
+    setupImagePreview('{{ form.poster_image.id_for_label }}', 'poster-preview');
+    
+    // Dynamic subcategory loading
+    const categorySelect = document.getElementById('{{ form.category.id_for_label }}');
+    const subcategorySelect = document.getElementById('{{ form.subcategory.id_for_label }}');
+    
+    categorySelect.addEventListener('change', function() {
+        const categoryId = this.value;
+        
+        // Clear subcategory options
+        subcategorySelect.innerHTML = '<option value="">---------</option>';
+        
+        if (categoryId) {
+            fetch(`{% url 'blog:load_subcategories' %}?category_id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(subcategory => {
+                        const option = document.createElement('option');
+                        option.value = subcategory.id;
+                        option.textContent = subcategory.name;
+                        subcategorySelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    // Form validation
+    const form = document.getElementById('post-form');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Por favor, completa todos los campos requeridos.');
+        }
+    });
+});
+</script>
+{% endblock %}

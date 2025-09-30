@@ -1,0 +1,112 @@
+<div class="search-widget">
+    <h5 class="widget-title">
+        <i class="fas fa-search me-2"></i>
+        Buscar Reseñas
+    </h5>
+    
+    <form method="get" action="{% url 'blog:search' %}" class="search-form">
+        <div class="input-group mb-3">
+            <input type="text" 
+                   name="query" 
+                   class="form-control" 
+                   placeholder="Buscar películas, anime, directores..."
+                   value="{{ request.GET.query|default:'' }}">
+            <button class="btn btn-primary" type="submit">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+        
+        <div class="search-filters">
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <select name="category" class="form-select form-select-sm">
+                        <option value="">Todas las categorías</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" 
+                                    {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <select name="rating" class="form-select form-select-sm">
+                        <option value="">Cualquier calificación</option>
+                        <option value="5" {% if request.GET.rating == "5" %}selected{% endif %}>⭐⭐⭐⭐⭐ (5 estrellas)</option>
+                        <option value="4" {% if request.GET.rating == "4" %}selected{% endif %}>⭐⭐⭐⭐ (4 estrellas)</option>
+                        <option value="3" {% if request.GET.rating == "3" %}selected{% endif %}>⭐⭐⭐ (3 estrellas)</option>
+                        <option value="2" {% if request.GET.rating == "2" %}selected{% endif %}>⭐⭐ (2 estrellas)</option>
+                        <option value="1" {% if request.GET.rating == "1" %}selected{% endif %}>⭐ (1 estrella)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <div class="popular-searches">
+        <h6 class="mb-2">Búsquedas populares:</h6>
+        <div class="search-tags">
+            <a href="?query=anime" class="badge bg-light text-dark me-1 mb-1">Anime</a>
+            <a href="?query=acción" class="badge bg-light text-dark me-1 mb-1">Acción</a>
+            <a href="?query=romance" class="badge bg-light text-dark me-1 mb-1">Romance</a>
+            <a href="?query=comedia" class="badge bg-light text-dark me-1 mb-1">Comedia</a>
+            <a href="?query=drama" class="badge bg-light text-dark me-1 mb-1">Drama</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.search-widget {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.widget-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.search-form .input-group {
+    margin-bottom: 1rem;
+}
+
+.search-form .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.search-filters .form-select {
+    font-size: 0.875rem;
+}
+
+.popular-searches {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f8f9fa;
+}
+
+.popular-searches h6 {
+    color: #6c757d;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.search-tags .badge {
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.75rem;
+    padding: 0.375rem 0.5rem;
+}
+
+.search-tags .badge:hover {
+    background-color: #007bff !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+}
+</style>

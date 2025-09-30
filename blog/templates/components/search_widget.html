@@ -1,0 +1,138 @@
+{% load blog_extras %}
+
+<div class="search-widget card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-search me-2"></i>
+            Buscar Reseñas
+        </h6>
+    </div>
+    
+    <div class="card-body">
+        <form method="get" action="{% url 'blog:search' %}" class="search-form">
+            <!-- Búsqueda de texto -->
+            <div class="mb-3">
+                <label class="form-label small">Texto</label>
+                <input type="text" name="query" class="form-control form-control-sm" 
+                       placeholder="Película, director, título..." 
+                       value="{{ request.GET.query }}">
+            </div>
+            
+            <!-- Categoría -->
+            <div class="mb-3">
+                <label class="form-label small">Categoría</label>
+                <select name="category" class="form-control form-control-sm">
+                    <option value="">Todas</option>
+                    {% get_popular_categories as categories %}
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" 
+                            {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Puntuación -->
+            <div class="row">
+                <div class="col-6">
+                    <label class="form-label small">Puntuación</label>
+                    <select name="rating" class="form-control form-control-sm">
+                        <option value="">Todas</option>
+                        <option value="5" {% if request.GET.rating == "5" %}selected{% endif %}>⭐⭐⭐⭐⭐</option>
+                        <option value="4" {% if request.GET.rating == "4" %}selected{% endif %}>⭐⭐⭐⭐</option>
+                        <option value="3" {% if request.GET.rating == "3" %}selected{% endif %}>⭐⭐⭐</option>
+                        <option value="2" {% if request.GET.rating == "2" %}selected{% endif %}>⭐⭐</option>
+                        <option value="1" {% if request.GET.rating == "1" %}selected{% endif %}>⭐</option>
+                    </select>
+                </div>
+                
+                <div class="col-6">
+                    <label class="form-label small">Año</label>
+                    <input type="number" name="year_from" class="form-control form-control-sm" 
+                           placeholder="2020" min="1900" max="2030" 
+                           value="{{ request.GET.year_from }}">
+                </div>
+            </div>
+            
+            <!-- Botones -->
+            <div class="d-grid gap-2 mt-3">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-search me-1"></i>
+                    Buscar
+                </button>
+                
+                {% if request.GET.query or request.GET.category or request.GET.rating %}
+                <a href="{% url 'blog:search' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-times me-1"></i>
+                    Limpiar
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Búsquedas populares -->
+<div class="popular-searches mt-3">
+    <div class="card">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="fas fa-fire me-2"></i>
+                Búsquedas Populares
+            </h6>
+        </div>
+        
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-1">
+                <a href="{% url 'blog:search' %}?query=anime" class="badge bg-primary text-decoration-none">
+                    Anime
+                </a>
+                <a href="{% url 'blog:search' %}?query=acción" class="badge bg-success text-decoration-none">
+                    Acción
+                </a>
+                <a href="{% url 'blog:search' %}?query=terror" class="badge bg-danger text-decoration-none">
+                    Terror
+                </a>
+                <a href="{% url 'blog:search' %}?query=comedia" class="badge bg-warning text-decoration-none">
+                    Comedia
+                </a>
+                <a href="{% url 'blog:search' %}?rating=5" class="badge bg-info text-decoration-none">
+                    5 Estrellas
+                </a>
+                <a href="{% url 'blog:search' %}?year_from=2023" class="badge bg-secondary text-decoration-none">
+                    2023+
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.search-widget .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.popular-searches .badge {
+    margin: 2px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
+}
+
+.popular-searches .badge:hover {
+    transform: translateY(-1px);
+    text-decoration: none !important;
+}
+
+.search-widget .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.popular-searches .card-header {
+    background-color: #fff3cd;
+    border-bottom: 1px solid #ffeaa7;
+}
+</style>

@@ -1,0 +1,421 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Iniciar Sesión - MovieReviews{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.auth-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 40px;
+    text-align: center;
+}
+
+.auth-body {
+    padding: 40px;
+}
+
+.form-control {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    padding: 12px 20px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #2c3e50;
+    box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
+    transform: translateY(-2px);
+}
+
+.btn-login {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 30px;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(44, 62, 80, 0.3);
+    color: white;
+}
+
+.form-floating {
+    margin-bottom: 20px;
+}
+
+.form-floating > .form-control {
+    padding: 1rem 0.75rem;
+}
+
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+.remember-me {
+    margin: 20px 0;
+}
+
+.forgot-password {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.quick-access {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 25px;
+    margin-top: 30px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.feature-item:last-child {
+    margin-bottom: 0;
+}
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.demo-account {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.social-login {
+    margin: 20px 0;
+}
+
+.btn-social {
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-google {
+    background: #db4437;
+    border-color: #db4437;
+    color: white;
+}
+
+.btn-facebook {
+    background: #3b5998;
+    border-color: #3b5998;
+    color: white;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #dee2e6;
+}
+
+.divider span {
+    padding: 0 15px;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="auth-card">
+                    <div class="row g-0">
+                        <!-- Left side - Form -->
+                        <div class="col-lg-6">
+                            <div class="auth-header">
+                                <i class="fas fa-sign-in-alt fs-1 mb-3"></i>
+                                <h2 class="fw-bold mb-2">Bienvenido de vuelta</h2>
+                                <p class="mb-0">Inicia sesión en tu cuenta de MovieReviews</p>
+                            </div>
+                            
+                            <div class="auth-body">
+                                <form method="post" id="login-form">
+                                    {% csrf_token %}
+                                    
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" name="username" 
+                                               id="id_username" placeholder="Nombre de usuario" required>
+                                        <label for="id_username">
+                                            <i class="fas fa-user me-2"></i>Nombre de usuario
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-floating">
+                                        <input type="password" class="form-control" name="password" 
+                                               id="id_password" placeholder="Contraseña" required>
+                                        <label for="id_password">
+                                            <i class="fas fa-lock me-2"></i>Contraseña
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="remember-me">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="remember_me" id="remember_me">
+                                            <label class="form-check-label" for="remember_me">
+                                                Recordarme
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Form errors -->
+                                    {% if form.errors %}
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-exclamation-circle me-2"></i>
+                                        Nombre de usuario o contraseña incorrectos.
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="d-grid mb-3">
+                                        <button type="submit" class="btn btn-login btn-lg">
+                                            <i class="fas fa-sign-in-alt me-2"></i>
+                                            Iniciar Sesión
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="forgot-password">
+                                        <a href="#" class="text-decoration-none">
+                                            <i class="fas fa-key me-1"></i>
+                                            ¿Olvidaste tu contraseña?
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="divider">
+                                        <span>o</span>
+                                    </div>
+                                    
+                                    <div class="text-center">
+                                        <p class="mb-0">
+                                            ¿No tienes cuenta? 
+                                            <a href="{% url 'blog:register' %}" class="text-decoration-none fw-bold">
+                                                Regístrate aquí
+                                            </a>
+                                        </p>
+                                    </div>
+                                </form>
+                                
+                                <!-- Demo account info -->
+                                <div class="demo-account">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Cuenta de Demostración
+                                    </h6>
+                                    <small>
+                                        <strong>Usuario:</strong> demo<br>
+                                        <strong>Contraseña:</strong> demo123
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right side - Features -->
+                        <div class="col-lg-6 d-flex align-items-center">
+                            <div class="p-4 w-100">
+                                <h3 class="fw-bold mb-4 text-primary">
+                                    <i class="fas fa-rocket me-2"></i>
+                                    ¡Bienvenido de vuelta!
+                                </h3>
+                                
+                                <div class="quick-access">
+                                    <h6 class="mb-3 text-center">Acceso rápido a:</h6>
+                                    
+                                    <div class="feature-item">
+                                        <div class="feature-icon">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Tus Reseñas</h6>
+                                            <small class="text-muted">Escribe y edita tus opiniones</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="feature-item">
+                                        <div class="feature-icon">
+                                            <i class="fas fa-comments"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Comentarios</h6>
+                                            <small class="text-muted">Participa en discusiones</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="feature-item">
+                                        <div class="feature-icon">
+                                            <i class="fas fa-heart"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Favoritos</h6>
+                                            <small class="text-muted">Guarda reseñas que te gusten</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="feature-item">
+                                        <div class="feature-icon">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Estadísticas</h6>
+                                            <small class="text-muted">Ve el impacto de tu contenido</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mt-4">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <i class="fas fa-users fs-2 text-primary mb-2"></i>
+                                            <div class="small text-muted">Comunidad<br>Activa</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <i class="fas fa-shield-alt fs-2 text-success mb-2"></i>
+                                            <div class="small text-muted">Datos<br>Seguros</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <i class="fas fa-mobile-alt fs-2 text-info mb-2"></i>
+                                            <div class="small text-muted">Acceso<br>Móvil</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('login-form');
+    const usernameField = document.getElementById('id_username');
+    const passwordField = document.getElementById('id_password');
+    
+    // Focus on username field
+    usernameField.focus();
+    
+    // Demo account quick fill
+    const demoAccount = document.querySelector('.demo-account');
+    if (demoAccount) {
+        demoAccount.addEventListener('click', function() {
+            usernameField.value = 'demo';
+            passwordField.value = 'demo123';
+            usernameField.focus();
+        });
+        
+        // Add cursor pointer
+        demoAccount.style.cursor = 'pointer';
+        demoAccount.title = 'Click para rellenar automáticamente';
+    }
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        if (!usernameField.value.trim()) {
+            usernameField.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            usernameField.classList.remove('is-invalid');
+        }
+        
+        if (!passwordField.value.trim()) {
+            passwordField.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            passwordField.classList.remove('is-invalid');
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+    
+    // Real-time validation
+    [usernameField, passwordField].forEach(field => {
+        field.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+        
+        field.addEventListener('blur', function() {
+            if (!this.value.trim()) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+            }
+        });
+    });
+    
+    // Enter key handling
+    usernameField.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            passwordField.focus();
+        }
+    });
+    
+    passwordField.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            form.submit();
+        }
+    });
+});
+</script>
+{% endblock %}

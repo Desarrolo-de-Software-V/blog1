@@ -1,0 +1,72 @@
+{% load blog_extras %}
+
+<div class="rating-stars-container">
+    {% if show_number %}
+        <span class="rating-number">{{ rating }}/5</span>
+    {% endif %}
+    
+    <div class="stars">
+        {% for i in "12345" %}
+            {% if forloop.counter <= rating %}
+                <i class="fas fa-star text-warning"></i>
+            {% else %}
+                <i class="far fa-star text-muted"></i>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.rating-stars-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rating-number {
+    font-weight: bold;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.stars {
+    display: flex;
+    gap: 0.1rem;
+}
+
+.stars i {
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.stars i.fa-star {
+    color: #ffc107;
+}
+
+.stars i.far.fa-star {
+    color: #dee2e6;
+}
+
+/* Animación hover para estrellas interactivas */
+.rating-stars-container.interactive .stars i {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rating-stars-container.interactive .stars i:hover {
+    transform: scale(1.1);
+}
+
+/* Diferentes tamaños */
+.rating-stars-container.small .stars i {
+    font-size: 0.7rem;
+}
+
+.rating-stars-container.large .stars i {
+    font-size: 1.2rem;
+}
+
+.rating-stars-container.extra-large .stars i {
+    font-size: 1.5rem;
+}
+</style>

@@ -1,0 +1,99 @@
+{% load blog_extras %}
+
+<div class="recent-posts-widget card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-clock me-2"></i>
+            Reseñas Recientes
+        </h6>
+    </div>
+    
+    <div class="card-body p-0">
+        {% get_random_posts 5 as recent_posts %}
+        {% for post in recent_posts %}
+        <div class="recent-post-item border-bottom p-3 {% if forloop.last %}border-0{% endif %}">
+            <div class="row g-2">
+                <div class="col-4">
+                    {% if post.featured_image %}
+                    <img src="{{ post.featured_image.url }}" class="img-fluid rounded" 
+                         alt="{{ post.title }}" style="height: 60px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                         style="height: 60px;">
+                        <i class="fas fa-film text-muted"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-8">
+                    <h6 class="mb-1">
+                        <a href="{{ post.get_absolute_url }}" class="text-decoration-none text-dark">
+                            {{ post.title|truncate_smart:40 }}
+                        </a>
+                    </h6>
+                    
+                    <small class="text-muted d-block">{{ post.movie_title|truncate_smart:25 }}</small>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <div class="rating-small">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= post.rating %}
+                                    <i class="fas fa-star text-warning" style="font-size: 0.7rem;"></i>
+                                {% else %}
+                                    <i class="far fa-star text-muted" style="font-size: 0.7rem;"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                        <small class="text-muted">
+                            {{ post.created_at|timesince }} ago
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center p-3 text-muted">
+            <i class="fas fa-file-alt fs-4 mb-2"></i>
+            <p class="mb-0 small">No hay reseñas disponibles</p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if recent_posts %}
+    <div class="card-footer text-center">
+        <a href="{% url 'blog:post_list' %}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-list me-1"></i>
+            Ver Todas las Reseñas
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.recent-post-item {
+    transition: background-color 0.2s ease;
+}
+
+.recent-post-item:hover {
+    background-color: #f8f9fa;
+}
+
+.recent-post-item h6 a:hover {
+    color: #0d6efd !important;
+}
+
+.recent-posts-widget .card-header {
+    background-color: #e3f2fd;
+    border-bottom: 1px solid #bbdefb;
+}
+
+.recent-posts-widget .card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.rating-small i {
+    margin-right: 1px;
+}
+</style>

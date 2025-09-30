@@ -1,0 +1,170 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Sesión Cerrada - MovieReviews{% endblock %}
+
+{% block extra_css %}
+<style>
+.logout-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logout-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    padding: 60px 40px;
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+}
+
+.logout-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 30px;
+    color: white;
+    font-size: 2rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 30px;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(44, 62, 80, 0.3);
+    color: white;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-top: 40px;
+}
+
+.feature-item {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.feature-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin: 0 auto 15px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logout-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="logout-card">
+                    <div class="logout-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    
+                    <h2 class="fw-bold mb-3 text-success">
+                        ¡Sesión cerrada exitosamente!
+                    </h2>
+                    
+                    <p class="text-muted mb-4">
+                        Has cerrado tu sesión de forma segura. Gracias por usar MovieReviews.
+                    </p>
+                    
+                    <div class="d-grid gap-2 d-md-block">
+                        <a href="{% url 'blog:home' %}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>
+                            Volver al Inicio
+                        </a>
+                        <a href="{% url 'blog:login' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Iniciar Sesión
+                        </a>
+                    </div>
+                    
+                    <div class="features-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h6 class="mb-1">Seguro</h6>
+                            <small class="text-muted">Datos protegidos</small>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h6 class="mb-1">Rápido</h6>
+                            <small class="text-muted">Acceso instantáneo</small>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <h6 class="mb-1">Personalizado</h6>
+                            <small class="text-muted">Experiencia única</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-redirect after 5 seconds
+    let countdown = 5;
+    const redirectBtn = document.querySelector('.btn-primary');
+    const originalText = redirectBtn.innerHTML;
+    
+    const timer = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+            redirectBtn.innerHTML = `<i class="fas fa-home me-2"></i>Volver al Inicio (${countdown})`;
+        } else {
+            clearInterval(timer);
+            window.location.href = "{% url 'blog:home' %}";
+        }
+    }, 1000);
+    
+    // Clear timer if user clicks any button
+    document.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            clearInterval(timer);
+        });
+    });
+});
+</script>
+{% endblock %}

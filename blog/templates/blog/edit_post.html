@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Reseña: {{ post.title }} - MovieReviews{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-section {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.form-section h4 {
+    color: #2c3e50;
+    border-bottom: 2px solid #e74c3c;
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+}
+
+.current-image {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+}
+
+.image-preview {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-top: 10px;
+}
+
+.required-field {
+    color: #e74c3c;
+}
+
+.char-count {
+    font-size: 0.85rem;
+    color: #666;
+    text-align: right;
+}
+
+.edit-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 40px 0;
+    margin-bottom: 30px;
+}
+
+.alert-warning {
+    border-left: 4px solid #f39c12;
+    border-radius: 0 8px 8px 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="edit-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-6 fw-bold mb-2">
+                    <i class="fas fa-edit"></i>
+                    Editar Reseña
+                </h1>
+                <p class="lead mb-0">{{ post.title }}</p>
+                <small class="text-white-50">Película: {{ post.movie_title }}</small>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ post.get_absolute_url }}" class="btn btn-outline-light">
+                    <i class="fas fa-eye"></i> Ver Reseña
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Main form -->
+        <div class="col-lg-8">
+            <!-- Warning message -->
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Atención:</strong> Estás editando una reseña existente. Los cambios se guardarán inmediatamente.
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="edit-form">
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h4><i class="fas fa-info-circle"></i> Información Básica</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Título de tu reseña <span class="required-field">*</span>
+                            </label>
+                            {{ form.title }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Película/Anime <span class="required-field">*</span>
+                            </label>
+                            {{ form.movie_title }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Director</label>
+                            {{ form.director }}
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">
+                                Año de estreno <span class="required-field">*</span>
+                            </label>
+                            {{ form.release_year }}
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">
+                                Tu puntuación <span class="required-field">*</span>
+                            </label>
+                            {{ form.rating }}
+                            <div class="form-text">Actual: {{ post.rating_stars }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="form-section">
+                    <h4><i class="fas fa-tags"></i> Categorización</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Categoría <span class="required-field">*</span>
+                            </label>
+                            {{ form.category }}
+                            <div class="form-text">Actual: {{ post.category.name }}</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subcategoría</label>
+                            {{ form.subcategory }}
+                            {% if post.subcategory %}
+                            <div class="form-text">Actual: {{ post.subcategory.name }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="form-section">
+                    <h4><i class="fas fa-pen-fancy"></i> Contenido de la Reseña</h4>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Resumen/Extracto <span class="required-field">*</span>
+                        </label>
+                        {{ form.excerpt }}
+                        <div class="char-count">
+                            <span id="excerpt-count">{{ post.excerpt|length }}</span>/300 caracteres
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Reseña completa <span class="required-field">*</span>
+                        </label>
+                        {{ form.content }}
+                    </div>
+                </div>
+
+                <!-- Images -->
+                <div class="form-section">
+                    <h4><i class="fas fa-images"></i> Imágenes</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Imagen destacada</label>
+                            
+                            {% if post.featured_image %}
+                            <div class="mb-2">
+                                <p class="small text-muted">Imagen actual:</p>
+                                <img src="{{ post.featured_image.url }}" class="current-image" alt="Imagen actual">
+                            </div>
+                            {% endif %}
+                            
+                            {{ form.featured_image }}
+                            <div class="form-text">Selecciona una nueva imagen para reemplazar la actual</div>
+                            <div id="featured-preview"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Poster de la película</label>
+                            
+                            {% if post.poster_image %}
+                            <div class="mb-2">
+                                <p class="small text-muted">Poster actual:</p>
+                                <img src="{{ post.poster_image.url }}" class="current-image" alt="Poster actual">
+                            </div>
+                            {% endif %}
+                            
+                            {{ form.poster_image }}
+                            <div class="form-text">Selecciona un nuevo poster para reemplazar el actual</div>
+                            <div id="poster-preview"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEO and Publishing -->
+                <div class="form-section">
+                    <h4><i class="fas fa-cog"></i> Configuración</h4>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Meta descripción (SEO)</label>
+                        {{ form.meta_description }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.published }}
+                                <label class="form-check-label" for="{{ form.published.id_for_label }}">
+                                    Publicar inmediatamente
+                                </label>
+                                <div class="form-text">
+                                    Estado actual: 
+                                    {% if post.published %}
+                                    <span class="text-success">Publicado</span>
+                                    {% else %}
+                                    <span class="text-warning">Borrador</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.featured }}
+                                <label class="form-check-label" for="{{ form.featured.id_for_label }}">
+                                    Marcar como destacado
+                                </label>
+                                <div class="form-text">
+                                    {% if post.featured %}
+                                    <span class="text-success">Actualmente destacado</span>
+                                    {% else %}
+                                    <span class="text-muted">No destacado</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit buttons -->
+                <div class="form-section">
+                    <div class="d-flex gap-3 justify-content-center">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-save"></i> Guardar Cambios
+                        </button>
+                        <a href="{{ post.get_absolute_url }}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                        <a href="{% url 'blog:delete_post' post.slug %}" class="btn btn-outline-danger btn-lg"
+                           onclick="return confirm('¿Estás seguro de que quieres eliminar esta reseña?')">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div style="position: sticky; top: 20px;">
+                <!-- Post stats -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-chart-line"></i> Estadísticas de la Reseña</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-eye text-primary"></i>
+                                <strong>Creado:</strong> {{ post.created_at|date:"d M Y - H:i" }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-edit text-warning"></i>
+                                <strong>Última edición:</strong> {{ post.updated_at|date:"d M Y - H:i" }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-comments text-success"></i>
+                                <strong>Comentarios:</strong> {{ post.comments.count }}
+                            </li>
+                            <li>
+                                <i class="fas fa-star text-warning"></i>
+                                <strong>Puntuación:</strong> {{ post.rating_stars }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Quick actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-bolt"></i> Acciones Rápidas</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ post.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> Ver Reseña
+                            </a>
+                            <a href="{% url 'blog:user_posts' %}" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-list"></i> Mis Reseñas
+                            </a>
+                            <a href="{% url 'blog:create_post' %}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-plus"></i> Nueva Reseña
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-question-circle"></i> Consejos de Edición</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="small mb-0">
+                            <li>Revisa la ortografía antes de guardar</li>
+                            <li>Asegúrate de que las imágenes sean relevantes</li>
+                            <li>Considera si cambiar la puntuación tras reflexionar</li>
+                            <li>Actualiza el contenido si has visto la película de nuevo</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Character count for excerpt
+    const excerptField = document.getElementById('{{ form.excerpt.id_for_label }}');
+    const excerptCount = document.getElementById('excerpt-count');
+    
+    function updateExcerptCount() {
+        const length = excerptField.value.length;
+        excerptCount.textContent = length;
+        excerptCount.style.color = length > 300 ? '#e74c3c' : '#666';
+    }
+    
+    excerptField.addEventListener('input', updateExcerptCount);
+    
+    // Image previews
+    function setupImagePreview(inputId, previewId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `
+                        <div class="mt-2">
+                            <p class="small text-success">Nueva imagen:</p>
+                            <img src="${e.target.result}" class="image-preview" alt="Preview">
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    setupImagePreview('{{ form.featured_image.id_for_label }}', 'featured-preview');
+    setupImagePreview('{{ form.poster_image.id_for_label }}', 'poster-preview');
+    
+    // Dynamic subcategory loading
+    const categorySelect = document.getElementById('{{ form.category.id_for_label }}');
+    const subcategorySelect = document.getElementById('{{ form.subcategory.id_for_label }}');
+    
+    categorySelect.addEventListener('change', function() {
+        const categoryId = this.value;
+        const currentSubcategoryId = {{ post.subcategory.id|default:"null" }};
+        
+        // Clear subcategory options
+        subcategorySelect.innerHTML = '<option value="">---------</option>';
+        
+        if (categoryId) {
+            fetch(`{% url 'blog:load_subcategories' %}?category_id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(subcategory => {
+                        const option = document.createElement('option');
+                        option.value = subcategory.id;
+                        option.textContent = subcategory.name;
+                        
+                        // Mantener la subcategoría actual seleccionada si pertenece a la nueva categoría
+                        if (subcategory.id === currentSubcategoryId) {
+                            option.selected = true;
+                        }
+                        
+                        subcategorySelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    // Trigger change event on load to populate subcategories
+    if (categorySelect.value) {
+        categorySelect.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+{% endblock %}
