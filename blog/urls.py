@@ -27,6 +27,7 @@ urlpatterns = [
     # AJAX
     path('load-subcategories/', views.load_subcategories, name='load_subcategories'),
     path('add-comment/<slug:post_slug>/', views.add_comment, name='add_comment'),
+    path('toggle-like/<slug:post_slug>/', views.toggle_like, name='toggle_like'),
     
     # Registro
     path('register/', views.register, name='register'),

@@ -8,7 +8,7 @@ from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView
-from .models import Post, Category, Subcategory, Comment
+from .models import Post, Category, Subcategory, Comment, PostLike
 from .forms import PostForm, CommentForm, SearchForm, CustomUserCreationForm
 
 def home(request):
@@ -48,6 +48,10 @@ def post_detail(request, slug):
     # Formulario de comentarios
     comment_form = CommentForm()
     
+    # Información de likes
+    likes_count = post.get_likes_count()
+    is_liked = post.is_liked_by_user(request.user)
+    
     if request.method == 'POST' and request.user.is_authenticated:
         comment_form = CommentForm(request.POST)
         if comment_form.is_valid():
@@ -63,6 +67,8 @@ def post_detail(request, slug):
         'comments': comments,
         'related_posts': related_posts,
         'comment_form': comment_form,
+        'likes_count': likes_count,
+        'is_liked': is_liked,
     }
     return render(request, 'blog/post_detail.html', context)
 
@@ -407,3 +413,46 @@ def custom_logout(request):
     
     # Redirigir al inicio después de mostrar la página de logout
     return render(request, 'registration/logged_out.html')
+
+@login_required
+def toggle_like(request, post_slug):
+    """Vista AJAX para dar/quitar like a una reseña"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        post = get_object_or_404(Post, slug=post_slug, published=True)
+        user = request.user
+        
+        print(f"Toggle like request: post={post.title}, user={user.username}")
+        print(f"Request method: {request.method}")
+        print(f"CSRF token: {request.META.get('HTTP_X_CSRFTOKEN', 'Not provided')}")
+        
+        # Verificar si el usuario ya dio like
+        like, created = PostLike.objects.get_or_create(post=post, user=user)
+        
+        if not created:
+            # Si ya existía, lo eliminamos (toggle)
+            like.delete()
+            liked = False
+            print(f"Like removed for post {post.title}")
+        else:
+            # Si se creó nuevo, el usuario dio like
+            liked = True
+            print(f"Like added for post {post.title}")
+        
+        likes_count = post.get_likes_count()
+        print(f"Total likes for {post.title}: {likes_count}")
+        
+        # Retornar respuesta JSON
+        return JsonResponse({
+            'success': True,
+            'liked': liked,
+            'likes_count': likes_count
+        })
+    except Exception as e:
+        print(f"Error in toggle_like: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })

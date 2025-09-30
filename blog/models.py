@@ -111,6 +111,16 @@ class Post(models.Model):
     @property
     def rating_stars(self):
         return "⭐" * self.rating + "☆" * (5 - self.rating)
+    
+    def get_likes_count(self):
+        """Retorna el número total de likes de la reseña"""
+        return self.likes.count()
+    
+    def is_liked_by_user(self, user):
+        """Verifica si un usuario específico ha dado like a esta reseña"""
+        if not user.is_authenticated:
+            return False
+        return self.likes.filter(user=user).exists()
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
@@ -129,3 +139,16 @@ class Comment(models.Model):
     @property
     def is_reply(self):
         return self.parent is not None
+
+class PostLike(models.Model):
+    """Modelo para manejar likes de reseñas"""
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='post_likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('post', 'user')  # Un usuario solo puede dar like una vez por post
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} le gusta {self.post.title}"

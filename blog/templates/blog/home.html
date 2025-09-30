@@ -106,8 +106,8 @@
                                     {{ post.created_at|date:"d M Y" }}
                                 </small>
                                 <small class="text-muted">
-                                    <i class="fas fa-user me-1"></i>
-                                    {{ post.author.first_name|default:post.author.username }}
+                                    <i class="fas fa-heart me-1"></i>
+                                    {{ post.get_likes_count }}
                                 </small>
                             </div>
                         </div>
@@ -181,8 +181,8 @@
                                     {{ post.created_at|date:"d M Y" }}
                                 </small>
                                 <small class="text-muted">
-                                    <i class="fas fa-comments me-1"></i>
-                                    {{ post.comments.count }}
+                                    <i class="fas fa-heart me-1"></i>
+                                    {{ post.get_likes_count }}
                                 </small>
                             </div>
                         </div>

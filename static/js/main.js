@@ -21,6 +21,7 @@ class MovieReviewsApp {
         this.setupTypewriter();
         this.setupCounterAnimation();
         this.setupProgressBars();
+        this.setupLikeSystem();
         this.bindEvents();
     }
 
@@ -414,6 +415,129 @@ class MovieReviewsApp {
         progressBars.forEach(bar => progressObserver.observe(bar));
     }
 
+    // Like System
+    setupLikeSystem() {
+        console.log('Setting up like system...');
+        const likeButtons = document.querySelectorAll('.like-btn');
+        console.log('Found like buttons:', likeButtons.length);
+        
+        likeButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                if (button.disabled) {
+                    this.showNotification('Inicia sesión para dar like', 'warning');
+                    return;
+                }
+                
+                const container = button.closest('.like-container');
+                const postSlug = container.dataset.postSlug;
+                
+                if (!postSlug) {
+                    console.error('Post slug not found');
+                    return;
+                }
+                
+                this.toggleLike(button, postSlug);
+            });
+        });
+    }
+
+    async toggleLike(button, postSlug) {
+        const originalText = button.innerHTML;
+        const isLiked = button.classList.contains('liked');
+        
+        console.log('Toggle like clicked for post:', postSlug);
+        const csrfToken = this.getCSRFToken();
+        console.log('CSRF Token:', csrfToken);
+        console.log('CSRF Token length:', csrfToken.length);
+        
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        try {
+            const response = await fetch(`/toggle-like/${postSlug}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                },
+            });
+            
+            console.log('Response status:', response.status);
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                // Update button state
+                if (data.liked) {
+                    button.classList.add('liked');
+                    this.showNotification('¡Te gusta esta reseña!', 'success');
+                } else {
+                    button.classList.remove('liked');
+                    this.showNotification('Ya no te gusta esta reseña', 'info');
+                }
+                
+                // Update like count
+                const likeCount = button.querySelector('.like-count');
+                if (likeCount) {
+                    likeCount.textContent = data.likes_count;
+                }
+                
+                // Update like text
+                const likeText = button.parentNode.querySelector('.like-text');
+                if (likeText) {
+                    if (data.likes_count === 0) {
+                        likeText.textContent = 'Sé el primero en dar like';
+                    } else if (data.likes_count === 1) {
+                        likeText.textContent = 'A 1 persona le gusta';
+                    } else {
+                        likeText.textContent = `A ${data.likes_count} personas les gusta`;
+                    }
+                }
+                
+                // Add animation
+                button.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    button.style.transform = 'scale(1)';
+                }, 200);
+                
+            } else {
+                this.showNotification('Error al procesar el like', 'error');
+                button.innerHTML = originalText;
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            this.showNotification('Error de conexión', 'error');
+            button.innerHTML = originalText;
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    getCSRFToken() {
+        // Try to get CSRF token from meta tag first
+        const metaToken = document.querySelector('meta[name="csrf-token"]');
+        if (metaToken) {
+            const token = metaToken.getAttribute('content');
+            if (token && token.length > 0) {
+                return token;
+            }
+        }
+        
+        // Fallback to hidden input
+        const inputToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (inputToken) {
+            return inputToken.value;
+        }
+        
+        console.error('CSRF token not found');
+        return '';
+    }
+
     // Event Binding
     bindEvents() {
         // Copy to clipboard
@@ -491,7 +615,9 @@ class MovieReviewsApp {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('MovieReviewsApp initializing...');
     new MovieReviewsApp();
+    console.log('MovieReviewsApp initialized successfully');
 });
 
 // Additional CSS for JS components

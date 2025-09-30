@@ -198,6 +198,10 @@
                 {{ post.content|linebreaks }}
             </div>
 
+            <!-- Like button -->
+            {% csrf_token %}
+            {% include 'blog/components/like_button.html' with post=post likes_count=likes_count is_liked=is_liked %}
+
             <!-- Tags and sharing -->
             <div class="border-top pt-4 mt-5">
                 <div class="row align-items-center">
