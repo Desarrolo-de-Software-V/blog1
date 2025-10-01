@@ -94,6 +94,10 @@ class Post(models.Model):
         return reverse('blog:post_detail', kwargs={'slug': self.slug})
     
     def save(self, *args, **kwargs):
+        # Generar slug automáticamente si no existe o si es un nuevo post
+        if not self.slug or self.pk is None:
+            self.slug = self.generate_unique_slug()
+        
         super().save(*args, **kwargs)
         
         # Redimensionar imágenes
@@ -101,6 +105,27 @@ class Post(models.Model):
             self.resize_image(self.featured_image.path, (800, 600))
         if self.poster_image:
             self.resize_image(self.poster_image.path, (400, 600))
+    
+    def generate_unique_slug(self):
+        """Genera un slug único basado en el título de la película"""
+        from django.utils.text import slugify
+        
+        # Usar el título de la película como base para el slug
+        base_slug = slugify(self.movie_title)
+        slug = base_slug
+        
+        # Si el slug está vacío, usar el título del post
+        if not slug:
+            slug = slugify(self.title)
+        
+        # Verificar si el slug ya existe y agregar un número si es necesario
+        counter = 1
+        original_slug = slug
+        while Post.objects.filter(slug=slug).exists():
+            slug = f"{original_slug}-{counter}"
+            counter += 1
+        
+        return slug
     
     def resize_image(self, image_path, size):
         """Redimensiona las imágenes para optimizar el rendimiento"""

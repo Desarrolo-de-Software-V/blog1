@@ -2,7 +2,6 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Post, Comment, Category, Subcategory
-from django.utils.text import slugify
 
 class PostForm(forms.ModelForm):
     class Meta:
@@ -75,8 +74,7 @@ class PostForm(forms.ModelForm):
     
     def save(self, commit=True):
         post = super().save(commit=False)
-        if not post.slug:
-            post.slug = slugify(post.title)
+        # El slug se genera automáticamente en el modelo Post.save()
         if commit:
             post.save()
         return post
