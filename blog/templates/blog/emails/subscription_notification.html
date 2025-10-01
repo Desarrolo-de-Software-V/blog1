@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva reseña - MovieReviews</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .email-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        .email-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        .email-body {
+            padding: 30px;
+        }
+        .post-card {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+        }
+        .post-title {
+            color: #2c3e50;
+            font-size: 1.4rem;
+            margin: 0 0 10px 0;
+        }
+        .movie-title {
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin: 0 0 15px 0;
+        }
+        .post-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .rating {
+            color: #ffc107;
+            font-size: 1.2rem;
+        }
+        .post-excerpt {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2c3e50;
+            margin: 15px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);
+        }
+        .email-footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        .unsubscribe-link {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.8rem;
+        }
+        .unsubscribe-link:hover {
+            color: #2c3e50;
+        }
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 0;
+                border-radius: 0;
+            }
+            .email-header, .email-body {
+                padding: 20px;
+            }
+            .post-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>🎬 Nueva Reseña</h1>
+            <p>Te notificamos porque estás suscrito a {{ subscription_context }}</p>
+        </div>
+        
+        <div class="email-body">
+            <h2>¡Hola {{ user.first_name|default:user.username }}!</h2>
+            <p>Hay una nueva reseña que podría interesarte:</p>
+            
+            <div class="post-card">
+                <h3 class="post-title">{{ post.title }}</h3>
+                <p class="movie-title">{{ post.movie_title }}</p>
+                
+                <div class="post-meta">
+                    <div class="meta-item">
+                        <i>👤</i>
+                        <span>{{ post.author.get_full_name|default:post.author.username }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i>📅</i>
+                        <span>{{ post.created_at|date:"d M Y" }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i>🏷️</i>
+                        <span>{{ post.category.name }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="rating">{{ post.rating_stars }}</span>
+                    </div>
+                </div>
+                
+                <div class="post-excerpt">
+                    <p><strong>Resumen:</strong></p>
+                    <p>{{ post.excerpt }}</p>
+                </div>
+                
+                <a href="{{ site_url }}{{ post.get_absolute_url }}" class="cta-button">
+                    📖 Leer Reseña Completa
+                </a>
+            </div>
+            
+            <p>¡Esperamos que disfrutes de esta nueva reseña!</p>
+        </div>
+        
+        <div class="email-footer">
+            <p>
+                <strong>MovieReviews</strong><br>
+                Tu blog favorito para reseñas de películas y anime
+            </p>
+            <p>
+                <a href="{{ site_url }}/my-subscriptions/" class="unsubscribe-link">
+                    Gestionar suscripciones
+                </a>
+                |
+                <a href="{{ site_url }}" class="unsubscribe-link">
+                    Visitar sitio
+                </a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

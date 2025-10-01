@@ -14,6 +14,7 @@ urlpatterns = [
     path('edit/<slug:slug>/', views.edit_post, name='edit_post'),
     path('delete/<slug:slug>/', views.delete_post, name='delete_post'),
     path('my-posts/', views.user_posts, name='user_posts'),
+    path('author/<int:author_id>/posts/', views.author_posts, name='author_posts'),
     
     # Categorías
     path('categories/', views.categories_list, name='categories_list'),
@@ -47,4 +48,16 @@ urlpatterns = [
     # Logout personalizado
     path('logout/', views.custom_logout, name='logout'),
     path('accounts/logout/', views.custom_logout),
+    
+    # Suscripciones
+    path('subscribe/author/<int:author_id>/', views.subscribe_author, name='subscribe_author'),
+    path('subscribe/category/<slug:category_slug>/', views.subscribe_category, name='subscribe_category'),
+    path('unsubscribe/author/<int:author_id>/', views.unsubscribe_author, name='unsubscribe_author'),
+    path('unsubscribe/category/<slug:category_slug>/', views.unsubscribe_category, name='unsubscribe_category'),
+    path('my-subscriptions/', views.my_subscriptions, name='my_subscriptions'),
+    path('subscription/<str:subscription_type>/<str:identifier>/', views.subscription_page, name='subscription_page'),
+    
+    # Feeds RSS
+    path('rss/author/<int:author_id>/', views.author_rss_feed, name='author_rss_feed'),
+    path('rss/category/<slug:category_slug>/', views.category_rss_feed, name='category_rss_feed'),
 ]

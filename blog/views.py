@@ -1,14 +1,16 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.views import LogoutView
 from django.core.paginator import Paginator
-from django.db.models import Q, Count
+from django.db.models import Q, Count, F
+from django.db import models
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView
-from .models import Post, Category, Subcategory, Comment, PostReaction, CommentVote, Notification, Mention
+from .models import Post, Category, Subcategory, Comment, PostReaction, CommentVote, Notification, Mention, Subscription
 from .forms import PostForm, CommentForm, SearchForm, CustomUserCreationForm
 
 def home(request):
@@ -37,7 +39,37 @@ class PostListView(ListView):
 def post_detail(request, slug):
     """Vista de detalle de un post"""
     post = get_object_or_404(Post, slug=slug, published=True)
+    
+    # Obtener parámetro de filtro de comentarios
+    comment_filter = request.GET.get('comment_filter', 'newest')
+    
+    # Aplicar filtro a los comentarios
     comments = post.comments.filter(approved=True, parent=None)
+    
+    if comment_filter == 'newest':
+        comments = comments.order_by('-created_at')
+    elif comment_filter == 'oldest':
+        comments = comments.order_by('created_at')
+    elif comment_filter == 'most_liked':
+        # Ordenar por puntaje de votos (upvotes - downvotes) descendente
+        comments = comments.annotate(
+            vote_score=Count('votes', filter=Q(votes__vote_type='upvote')) - 
+                      Count('votes', filter=Q(votes__vote_type='downvote'))
+        ).order_by('-vote_score', '-created_at')
+    elif comment_filter == 'least_liked':
+        # Ordenar por puntaje de votos ascendente
+        comments = comments.annotate(
+            vote_score=Count('votes', filter=Q(votes__vote_type='upvote')) - 
+                      Count('votes', filter=Q(votes__vote_type='downvote'))
+        ).order_by('vote_score', '-created_at')
+    elif comment_filter == 'most_upvotes':
+        # Ordenar por número de upvotes descendente
+        comments = comments.annotate(
+            upvotes_count=Count('votes', filter=Q(votes__vote_type='upvote'))
+        ).order_by('-upvotes_count', '-created_at')
+    else:
+        # Por defecto, más nuevos
+        comments = comments.order_by('-created_at')
     
     # Posts relacionados
     related_posts = Post.objects.filter(
@@ -88,6 +120,7 @@ def post_detail(request, slug):
         'reactions_by_type': reactions_by_type,
         'user_reaction': user_reaction,
         'total_reactions': total_reactions,
+        'comment_filter': comment_filter,
         # Compatibilidad con el sistema anterior
         'likes_count': post.get_likes_count(),
         'is_liked': post.is_liked_by_user(request.user),
@@ -109,24 +142,6 @@ def category_posts(request, slug):
         'page_obj': page_obj,
     }
     return render(request, 'blog/category_posts.html', context)
-
-def subcategory_posts(request, category_slug, subcategory_slug):
-    """Vista para posts de una subcategoría específica"""
-    category = get_object_or_404(Category, slug=category_slug)
-    subcategory = get_object_or_404(Subcategory, slug=subcategory_slug, category=category)
-    posts = Post.objects.filter(subcategory=subcategory, published=True)
-    
-    paginator = Paginator(posts, 9)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    context = {
-        'category': category,
-        'subcategory': subcategory,
-        'posts': page_obj,
-        'page_obj': page_obj,
-    }
-    return render(request, 'blog/subcategory_posts.html', context)
 
 def search_posts(request):
     """Vista de búsqueda"""
@@ -370,6 +385,54 @@ def subcategory_posts(request, category_slug, subcategory_slug):
     }
     return render(request, 'blog/subcategory_posts.html', context)
 
+def author_posts(request, author_id=None):
+    """Vista para mostrar los posts de un autor específico"""
+    if author_id:
+        author = get_object_or_404(User, id=author_id)
+        posts = Post.objects.filter(author=author, published=True)
+        page_title = f"Reseñas de {author.get_full_name() or author.username}"
+    else:
+        # Si no se especifica autor, mostrar posts del usuario actual
+        author = request.user
+        posts = Post.objects.filter(author=author)
+        page_title = "Mis Reseñas"
+    
+    # Aplicar filtros
+    search = request.GET.get('search', '')
+    status = request.GET.get('status', '')
+    order = request.GET.get('order', '-created_at')
+    
+    if search:
+        posts = posts.filter(
+            Q(title__icontains=search) |
+            Q(movie_title__icontains=search)
+        )
+    
+    if status == 'published':
+        posts = posts.filter(published=True)
+    elif status == 'draft':
+        posts = posts.filter(published=False)
+    elif status == 'featured':
+        posts = posts.filter(featured=True)
+    
+    # Ordenamiento
+    valid_orders = ['-created_at', 'created_at', 'title', '-title', '-rating']
+    if order in valid_orders:
+        posts = posts.order_by(order)
+    
+    paginator = Paginator(posts, 9)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'author': author,
+        'posts': page_obj,
+        'page_obj': page_obj,
+        'page_title': page_title,
+        'is_own_posts': author == request.user,
+    }
+    return render(request, 'blog/author_posts.html', context)
+
 def user_posts(request):
     """Vista para mostrar los posts del usuario actual con filtros"""
     posts = Post.objects.filter(author=request.user)
@@ -408,7 +471,6 @@ def user_posts(request):
     return render(request, 'blog/user_posts.html', context)
 
 def custom_login(request):
-    """Vista personalizada para login"""
     if request.user.is_authenticated:
         return redirect('blog:home')
     
@@ -678,3 +740,222 @@ def get_recent_notifications(request):
         return JsonResponse({'notifications': notifications_data})
     except Exception as e:
         return JsonResponse({'notifications': [], 'error': str(e)})
+
+# Vistas para suscripciones
+@login_required
+def subscribe_author(request, author_id):
+    """Suscribirse a un autor"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        author = get_object_or_404(User, id=author_id)
+        
+        # Evitar suscribirse a sí mismo
+        if author == request.user:
+            return JsonResponse({'success': False, 'error': 'No puedes suscribirte a ti mismo'})
+        
+        # Crear suscripción si no existe
+        subscription, created = Subscription.objects.get_or_create(
+            user=request.user,
+            subscription_type='author',
+            author=author,
+            defaults={'is_active': True}
+        )
+        
+        if not created and subscription.is_active:
+            return JsonResponse({'success': False, 'error': 'Ya estás suscrito a este autor'})
+        elif not created and not subscription.is_active:
+            subscription.is_active = True
+            subscription.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Te has suscrito a {author.get_full_name() or author.username}',
+            'subscribed': True
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def subscribe_category(request, category_slug):
+    """Suscribirse a una categoría"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        category = get_object_or_404(Category, slug=category_slug)
+        
+        # Crear suscripción si no existe
+        subscription, created = Subscription.objects.get_or_create(
+            user=request.user,
+            subscription_type='category',
+            category=category,
+            defaults={'is_active': True}
+        )
+        
+        if not created and subscription.is_active:
+            return JsonResponse({'success': False, 'error': 'Ya estás suscrito a esta categoría'})
+        elif not created and not subscription.is_active:
+            subscription.is_active = True
+            subscription.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Te has suscrito a la categoría {category.name}',
+            'subscribed': True
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def unsubscribe_author(request, author_id):
+    """Desuscribirse de un autor"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        author = get_object_or_404(User, id=author_id)
+        
+        subscription = Subscription.objects.filter(
+            user=request.user,
+            subscription_type='author',
+            author=author
+        ).first()
+        
+        if not subscription:
+            return JsonResponse({'success': False, 'error': 'No estás suscrito a este autor'})
+        
+        subscription.is_active = False
+        subscription.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Te has desuscrito de {author.get_full_name() or author.username}',
+            'subscribed': False
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def unsubscribe_category(request, category_slug):
+    """Desuscribirse de una categoría"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        category = get_object_or_404(Category, slug=category_slug)
+        
+        subscription = Subscription.objects.filter(
+            user=request.user,
+            subscription_type='category',
+            category=category
+        ).first()
+        
+        if not subscription:
+            return JsonResponse({'success': False, 'error': 'No estás suscrito a esta categoría'})
+        
+        subscription.is_active = False
+        subscription.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Te has desuscrito de la categoría {category.name}',
+            'subscribed': False
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def my_subscriptions(request):
+    """Vista para mostrar las suscripciones del usuario"""
+    subscriptions = Subscription.objects.filter(user=request.user, is_active=True)
+    
+    author_subscriptions = subscriptions.filter(subscription_type='author')
+    category_subscriptions = subscriptions.filter(subscription_type='category')
+    
+    context = {
+        'author_subscriptions': author_subscriptions,
+        'category_subscriptions': category_subscriptions,
+        'total_subscriptions': subscriptions.count(),
+    }
+    return render(request, 'blog/my_subscriptions.html', context)
+
+def author_rss_feed(request, author_id):
+    """Feed RSS para un autor específico"""
+    author = get_object_or_404(User, id=author_id)
+    posts = Post.objects.filter(author=author, published=True).order_by('-created_at')[:20]
+    
+    # Si no hay publicaciones, mostrar página amigable
+    if not posts.exists():
+        context = {
+            'author': author,
+            'feed_title': f'Reseñas de {author.get_full_name() or author.username}',
+            'feed_description': f'Últimas reseñas publicadas por {author.get_full_name() or author.username}',
+            'no_posts': True,
+            'message': f'{author.get_full_name() or author.username} aún no ha publicado ninguna reseña.',
+            'suggestion': 'Visita nuestro blog para ver otras reseñas interesantes.'
+        }
+        return render(request, 'blog/rss_empty.html', context)
+    
+    context = {
+        'posts': posts,
+        'author': author,
+        'feed_title': f'Reseñas de {author.get_full_name() or author.username}',
+        'feed_description': f'Últimas reseñas publicadas por {author.get_full_name() or author.username}',
+    }
+    
+    return render(request, 'blog/rss_feed.xml', context, content_type='application/rss+xml')
+
+def category_rss_feed(request, category_slug):
+    """Feed RSS para una categoría específica"""
+    category = get_object_or_404(Category, slug=category_slug)
+    posts = Post.objects.filter(category=category, published=True).order_by('-created_at')[:20]
+    
+    # Si no hay publicaciones, mostrar página amigable
+    if not posts.exists():
+        context = {
+            'category': category,
+            'feed_title': f'Reseñas de {category.name}',
+            'feed_description': f'Últimas reseñas de la categoría {category.name}',
+            'no_posts': True,
+            'message': f'La categoría "{category.name}" aún no tiene reseñas publicadas.',
+            'suggestion': 'Explora otras categorías o visita nuestro blog para ver las últimas reseñas.'
+        }
+        return render(request, 'blog/rss_empty.html', context)
+    
+    context = {
+        'posts': posts,
+        'category': category,
+        'feed_title': f'Reseñas de {category.name}',
+        'feed_description': f'Últimas reseñas de la categoría {category.name}',
+    }
+    
+    return render(request, 'blog/rss_feed.xml', context, content_type='application/rss+xml')
+
+def subscription_page(request, subscription_type, identifier):
+    """Página elegante para opciones de suscripción"""
+    if subscription_type == 'author':
+        author = get_object_or_404(User, id=identifier)
+        feed_title = f"Reseñas de {author.get_full_name() or author.username}"
+        feed_description = f"Últimas reseñas publicadas por {author.get_full_name() or author.username}"
+        rss_url = f"/rss/author/{author.id}/"
+        recent_posts = Post.objects.filter(author=author, published=True).order_by('-created_at')[:6]
+    elif subscription_type == 'category':
+        category = get_object_or_404(Category, slug=identifier)
+        feed_title = f"Reseñas de {category.name}"
+        feed_description = f"Últimas reseñas de la categoría {category.name}"
+        rss_url = f"/rss/category/{category.slug}/"
+        recent_posts = Post.objects.filter(category=category, published=True).order_by('-created_at')[:6]
+    else:
+        return redirect('blog:home')
+    
+    context = {
+        'subscription_type': subscription_type,
+        'feed_title': feed_title,
+        'feed_description': feed_description,
+        'rss_url': rss_url,
+        'recent_posts': recent_posts,
+    }
+    
+    return render(request, 'blog/subscription_page.html', context)

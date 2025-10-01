@@ -1,0 +1,432 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Suscripciones - MovieReviews{% endblock %}
+
+{% block extra_css %}
+<style>
+.subscription-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.subscription-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.subscription-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.subscription-body {
+    padding: 25px;
+}
+
+.subscription-type {
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.subscription-type.author {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.subscription-type.category {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.subscription-actions {
+    margin-top: 20px;
+}
+
+.btn-unsubscribe {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    border-radius: 25px;
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-unsubscribe:hover {
+    background: #c82333;
+    border-color: #bd2130;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.stats-number {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.rss-link {
+    background: #ff6b35;
+    color: white;
+    border-radius: 25px;
+    padding: 8px 20px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.rss-link:hover {
+    background: #e55a2b;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+/* Estilos para enlaces clickeables en headers */
+.subscription-header a {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.subscription-header a:hover {
+    color: #ffd700 !important;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    transform: scale(1.05);
+}
+
+.subscription-header a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #ffd700;
+    transition: width 0.3s ease;
+}
+
+.subscription-header a:hover::after {
+    width: 100%;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="stats-card">
+                <div class="stats-number">{{ total_subscriptions }}</div>
+                <h4>Mis Suscripciones</h4>
+                <p class="mb-0">Recibe notificaciones cuando tus autores o categorías favoritas publiquen contenido nuevo</p>
+            </div>
+
+            <!-- Author Subscriptions -->
+            <div class="mb-5">
+                <h3 class="mb-4">
+                    <i class="fas fa-user-friends text-primary"></i>
+                    Suscripciones a Autores
+                </h3>
+                
+                {% if author_subscriptions %}
+                <div class="row">
+                    {% for subscription in author_subscriptions %}
+                    <div class="col-md-6 mb-4">
+                        <div class="subscription-card">
+                            <div class="subscription-header">
+                                <i class="fas fa-user-circle fs-1 mb-2"></i>
+                                <h5 class="mb-0">
+                                    <a href="{% url 'blog:author_posts' subscription.author.id %}" 
+                                       class="text-white text-decoration-none">
+                                        {{ subscription.author.get_full_name|default:subscription.author.username }}
+                                    </a>
+                                </h5>
+                            </div>
+                            <div class="subscription-body">
+                                <span class="subscription-type author">
+                                    <i class="fas fa-user"></i> Autor
+                                </span>
+                                
+                                <p class="text-muted mb-3">
+                                    <i class="fas fa-calendar"></i>
+                                    Suscrito desde {{ subscription.created_at|date:"d M Y" }}
+                                </p>
+                                
+                                <div class="subscription-actions">
+                                    <button class="btn btn-unsubscribe" 
+                                            data-subscription-id="{{ subscription.id }}"
+                                            data-type="author"
+                                            data-id="{{ subscription.author.id }}">
+                                        <i class="fas fa-times"></i> Desuscribirse
+                                    </button>
+                                    
+                                    <a href="{% url 'blog:author_rss_feed' subscription.author.id %}" 
+                                       class="rss-link" target="_blank">
+                                        <i class="fas fa-rss"></i> RSS Feed
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-user-friends"></i>
+                    <h5>No tienes suscripciones a autores</h5>
+                    <p>Explora las reseñas y suscríbete a tus autores favoritos</p>
+                    <a href="{% url 'blog:post_list' %}" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Explorar Reseñas
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Category Subscriptions -->
+            <div class="mb-5">
+                <h3 class="mb-4">
+                    <i class="fas fa-tags text-success"></i>
+                    Suscripciones a Categorías
+                </h3>
+                
+                {% if category_subscriptions %}
+                <div class="row">
+                    {% for subscription in category_subscriptions %}
+                    <div class="col-md-6 mb-4">
+                        <div class="subscription-card">
+                            <div class="subscription-header">
+                                <i class="fas fa-tag fs-1 mb-2"></i>
+                                <h5 class="mb-0">
+                                    <a href="{% url 'blog:category_posts' subscription.category.slug %}" 
+                                       class="text-white text-decoration-none">
+                                        {{ subscription.category.name }}
+                                    </a>
+                                </h5>
+                            </div>
+                            <div class="subscription-body">
+                                <span class="subscription-type category">
+                                    <i class="fas fa-tag"></i> Categoría
+                                </span>
+                                
+                                <p class="text-muted mb-3">
+                                    <i class="fas fa-calendar"></i>
+                                    Suscrito desde {{ subscription.created_at|date:"d M Y" }}
+                                </p>
+                                
+                                {% if subscription.category.description %}
+                                <p class="small text-muted mb-3">
+                                    {{ subscription.category.description|truncatewords:15 }}
+                                </p>
+                                {% endif %}
+                                
+                                <div class="subscription-actions">
+                                    <button class="btn btn-unsubscribe" 
+                                            data-subscription-id="{{ subscription.id }}"
+                                            data-type="category"
+                                            data-slug="{{ subscription.category.slug }}">
+                                        <i class="fas fa-times"></i> Desuscribirse
+                                    </button>
+                                    
+                                    <a href="{% url 'blog:category_rss_feed' subscription.category.slug %}" 
+                                       class="rss-link" target="_blank">
+                                        <i class="fas fa-rss"></i> RSS Feed
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-tags"></i>
+                    <h5>No tienes suscripciones a categorías</h5>
+                    <p>Explora las categorías y suscríbete a tus temas favoritos</p>
+                    <a href="{% url 'blog:categories_list' %}" class="btn btn-primary">
+                        <i class="fas fa-list"></i> Ver Categorías
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-info-circle"></i>
+                        ¿Cómo funcionan las suscripciones?
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Recibe emails cuando publiquen contenido nuevo
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Accede a feeds RSS filtrados
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Gestiona tus suscripciones fácilmente
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Desuscríbete cuando quieras
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-rss"></i>
+                        Feeds RSS Disponibles
+                    </h5>
+                    <p class="card-text">
+                        Cada suscripción incluye un feed RSS personalizado que puedes usar en tu lector de feeds favorito.
+                    </p>
+                    <a href="{% url 'blog:post_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i> Explorar Contenido
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar desuscripciones
+    const unsubscribeButtons = document.querySelectorAll('.btn-unsubscribe');
+    
+    unsubscribeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const subscriptionId = this.dataset.subscriptionId;
+            const type = this.dataset.type;
+            const id = this.dataset.id;
+            const slug = this.dataset.slug;
+            
+            if (confirm('¿Estás seguro de que quieres desuscribirte?')) {
+                // Mostrar indicador de carga
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+                this.disabled = true;
+                
+                // Determinar la URL correcta
+                let url;
+                if (type === 'author') {
+                    url = `/unsubscribe/author/${id}/`;
+                } else if (type === 'category') {
+                    url = `/unsubscribe/category/${slug}/`;
+                }
+                
+                // Enviar solicitud
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Mostrar mensaje de éxito
+                        showNotification('Éxito', data.message, 'success');
+                        
+                        // Remover la tarjeta de suscripción
+                        const card = this.closest('.subscription-card').parentElement;
+                        card.style.transition = 'all 0.5s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.8)';
+                        
+                        setTimeout(() => {
+                            card.remove();
+                            
+                            // Actualizar contador si no hay más suscripciones
+                            const remainingCards = document.querySelectorAll('.subscription-card');
+                            if (remainingCards.length === 0) {
+                                location.reload();
+                            }
+                        }, 500);
+                    } else {
+                        showNotification('Error', data.error, 'error');
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Error', 'Ocurrió un error al procesar la solicitud', 'error');
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                });
+            }
+        });
+    });
+    
+    // Función para mostrar notificaciones
+    function showNotification(title, message, type) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '300px';
+        
+        notification.innerHTML = `
+            <strong>${title}</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}

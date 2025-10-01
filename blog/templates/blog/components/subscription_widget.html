@@ -1,0 +1,246 @@
+{% load static %}
+
+<!-- Botón de suscripción a autor -->
+{% if subscription_type == 'author' %}
+<div class="subscription-widget" data-author-id="{{ author.id }}">
+    <button class="btn btn-outline-primary subscription-btn" 
+            data-type="author" 
+            data-id="{{ author.id }}"
+            {% if not user.is_authenticated %}disabled title="Inicia sesión para suscribirte"{% endif %}>
+        <i class="fas fa-bell"></i>
+        <span class="btn-text">Suscribirse</span>
+    </button>
+    
+    <a href="{% url 'blog:subscription_page' subscription_type=subscription_type identifier=author.id %}" 
+       class="btn btn-outline-secondary rss-btn" 
+       title="Opciones de Suscripción">
+        <i class="fas fa-cog"></i>
+    </a>
+</div>
+
+<!-- Botón de suscripción a categoría -->
+{% elif subscription_type == 'category' %}
+<div class="subscription-widget" data-category-slug="{{ category.slug }}">
+    <button class="btn btn-outline-primary subscription-btn" 
+            data-type="category" 
+            data-slug="{{ category.slug }}"
+            {% if not user.is_authenticated %}disabled title="Inicia sesión para suscribirte"{% endif %}>
+        <i class="fas fa-bell"></i>
+        <span class="btn-text">Suscribirse</span>
+    </button>
+    
+    <a href="{% url 'blog:subscription_page' subscription_type=subscription_type identifier=category.slug %}" 
+       class="btn btn-outline-secondary rss-btn" 
+       title="Opciones de Suscripción">
+        <i class="fas fa-cog"></i>
+    </a>
+</div>
+{% endif %}
+
+<style>
+.subscription-widget {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.subscription-btn {
+    border-radius: 25px;
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.subscription-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.subscription-btn.subscribed {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+.subscription-btn.subscribed:hover {
+    background-color: #c0392b;
+    border-color: #c0392b;
+}
+
+.subscription-btn.subscribed .btn-text::after {
+    content: " ✓";
+}
+
+.rss-btn {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.rss-btn:hover {
+    background-color: #ff6b35;
+    border-color: #ff6b35;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.subscription-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.subscription-btn.loading {
+    pointer-events: none;
+}
+
+.subscription-btn.loading .btn-text {
+    opacity: 0;
+}
+
+.subscription-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener token CSRF
+    function getCSRFToken() {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (token) return token.value;
+        
+        // Si no hay token en el DOM, obtenerlo de las cookies
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        return null;
+    }
+    
+    // Manejar clics en botones de suscripción
+    document.querySelectorAll('.subscription-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            if (this.disabled || this.classList.contains('loading')) return;
+            
+            const type = this.dataset.type;
+            const id = this.dataset.id;
+            const slug = this.dataset.slug;
+            
+            // Mostrar estado de carga
+            this.classList.add('loading');
+            this.disabled = true;
+            
+            // Determinar la URL correcta
+            let url;
+            if (type === 'author') {
+                url = `/subscribe/author/${id}/`;
+            } else if (type === 'category') {
+                url = `/subscribe/category/${slug}/`;
+            } else {
+                this.classList.remove('loading');
+                this.disabled = false;
+                return;
+            }
+            
+            // Obtener token CSRF
+            const csrfToken = getCSRFToken();
+            if (!csrfToken) {
+                this.classList.remove('loading');
+                this.disabled = false;
+                showNotification('Error', 'No se pudo obtener el token de seguridad', 'error');
+                return;
+            }
+            
+            // Enviar solicitud
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                this.classList.remove('loading');
+                this.disabled = false;
+                
+                if (data.success) {
+                    if (data.subscribed) {
+                        this.classList.add('subscribed');
+                        this.querySelector('.btn-text').textContent = 'Suscrito ✓';
+                        showNotification('Éxito', data.message, 'success');
+                    } else {
+                        this.classList.remove('subscribed');
+                        this.querySelector('.btn-text').textContent = 'Suscribirse';
+                        showNotification('Éxito', data.message, 'success');
+                    }
+                } else {
+                    showNotification('Error', data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.classList.remove('loading');
+                this.disabled = false;
+                showNotification('Error', 'Ocurrió un error al procesar la solicitud', 'error');
+            });
+        });
+    });
+    
+    // Función para mostrar notificaciones
+    function showNotification(title, message, type) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '300px';
+        
+        notification.innerHTML = `
+            <strong>${title}</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+});
+</script>

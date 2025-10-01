@@ -128,6 +128,7 @@
 {% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="container py-5">
     <div class="row">
         <div class="col-lg-8 mx-auto">
@@ -270,61 +271,113 @@
 
 <script>
 function markAsRead(notificationId) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
     fetch(`/notifications/mark-read/${notificationId}/`, {
         method: 'POST',
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-CSRFToken': csrfToken,
             'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({})
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
-            notificationElement.classList.remove('unread');
-            notificationElement.classList.add('read');
-            
-            const badge = notificationElement.querySelector('.badge.bg-danger');
-            if (badge) {
-                badge.remove();
+            if (notificationElement) {
+                notificationElement.classList.remove('unread');
+                notificationElement.classList.add('read');
+                
+                const badge = notificationElement.querySelector('.badge.bg-danger');
+                if (badge) {
+                    badge.remove();
+                }
+                
+                const markBtn = notificationElement.querySelector('.mark-read-btn');
+                if (markBtn) {
+                    markBtn.innerHTML = '<i class="fas fa-check me-1"></i>Marcada';
+                    markBtn.disabled = true;
+                }
             }
             
-            const markBtn = notificationElement.querySelector('.mark-read-btn');
-            markBtn.innerHTML = '<i class="fas fa-check me-1"></i>Marcada';
+            // Actualizar contador en la página
+            updateNotificationStats();
             
+            // Actualizar contador en la navbar
             updateNotificationCount();
+            
+            console.log('Notificación marcada como leída');
+        } else {
+            console.error('Error al marcar notificación:', data.error);
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al marcar la notificación como leída');
+    });
 }
 
 function markAllAsRead() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
     fetch('/notifications/mark-all-read/', {
         method: 'POST',
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-CSRFToken': csrfToken,
             'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({})
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
+            // Marcar todas las notificaciones como leídas visualmente
             document.querySelectorAll('.notification-item.unread').forEach(item => {
                 item.classList.remove('unread');
                 item.classList.add('read');
+                
                 const badge = item.querySelector('.badge.bg-danger');
                 if (badge) {
                     badge.remove();
                 }
+                
                 const markBtn = item.querySelector('.mark-read-btn');
-                markBtn.innerHTML = '<i class="fas fa-check me-1"></i>Marcada';
+                if (markBtn) {
+                    markBtn.innerHTML = '<i class="fas fa-check me-1"></i>Marcada';
+                    markBtn.disabled = true;
+                }
             });
             
+            // Actualizar contador en la página
+            updateNotificationStats();
+            
+            // Actualizar contador en la navbar
             updateNotificationCount();
-            location.reload();
+            
+            console.log('Todas las notificaciones marcadas como leídas');
+            
+            // Mostrar mensaje de éxito
+            alert('Todas las notificaciones han sido marcadas como leídas');
+        } else {
+            console.error('Error al marcar todas las notificaciones:', data.error);
+            alert('Error al marcar las notificaciones como leídas');
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al marcar las notificaciones como leídas');
+    });
 }
 
 function openNotification(url, notificationId) {
@@ -357,6 +410,25 @@ function updateNotificationCount() {
         }
     })
     .catch(error => console.error('Error:', error));
+}
+
+function updateNotificationStats() {
+    // Actualizar las estadísticas en la página de notificaciones
+    const unreadElements = document.querySelectorAll('.notification-item.unread');
+    const totalElements = document.querySelectorAll('.notification-item');
+    const readElements = document.querySelectorAll('.notification-item.read');
+    
+    // Actualizar contador de no leídas
+    const unreadCard = document.querySelector('.col-md-4:first-child .card-title');
+    if (unreadCard) {
+        unreadCard.textContent = unreadElements.length;
+    }
+    
+    // Actualizar contador de leídas
+    const readCard = document.querySelector('.col-md-4:last-child .card-title');
+    if (readCard) {
+        readCard.textContent = readElements.length;
+    }
 }
 
 // Actualizar contador cada 30 segundos

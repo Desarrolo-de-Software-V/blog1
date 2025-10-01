@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Suscribirse a {{ feed_title }} - MovieReviews{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <!-- Header -->
+                    <div class="text-center mb-4">
+                        <div class="subscription-icon mb-3">
+                            {% if subscription_type == 'author' %}
+                                <i class="fas fa-user-circle text-primary" style="font-size: 4rem;"></i>
+                            {% else %}
+                                <i class="fas fa-folder-open text-success" style="font-size: 4rem;"></i>
+                            {% endif %}
+                        </div>
+                        <h1 class="display-5 fw-bold text-primary">{{ feed_title }}</h1>
+                        <p class="lead text-muted">{{ feed_description }}</p>
+                    </div>
+
+                    <!-- Subscription Options -->
+                    <div class="row g-4 mb-5">
+                        <!-- Email Subscription -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 bg-light">
+                                <div class="card-body text-center p-4">
+                                    <i class="fas fa-envelope text-primary mb-3" style="font-size: 2.5rem;"></i>
+                                    <h4 class="card-title">Notificaciones por Email</h4>
+                                    <p class="card-text text-muted">
+                                        Recibe un email cada vez que se publique nueva contenido.
+                                    </p>
+                                    {% if user.is_authenticated %}
+                                        <button class="btn btn-primary btn-lg w-100" onclick="subscribeEmail()">
+                                            <i class="fas fa-bell"></i> Suscribirse por Email
+                                        </button>
+                                    {% else %}
+                                        <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg w-100">
+                                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RSS Feed -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 bg-light">
+                                <div class="card-body text-center p-4">
+                                    <i class="fas fa-rss text-warning mb-3" style="font-size: 2.5rem;"></i>
+                                    <h4 class="card-title">Feed RSS</h4>
+                                    <p class="card-text text-muted">
+                                        Para lectores RSS y aplicaciones especializadas.
+                                    </p>
+                                    <a href="{{ rss_url }}" class="btn btn-warning btn-lg w-100" target="_blank">
+                                        <i class="fas fa-external-link-alt"></i> Ver Feed RSS
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle me-2"></i>¿Qué es RSS?</h5>
+                        <p class="mb-0">
+                            RSS es una forma de recibir actualizaciones automáticas de contenido. 
+                            Si no sabes qué es, te recomendamos usar las <strong>notificaciones por email</strong> 
+                            que son más fáciles de entender.
+                        </p>
+                    </div>
+
+                    <!-- Recent Posts Preview -->
+                    {% if recent_posts %}
+                    <div class="mt-5">
+                        <h4 class="mb-4">Últimas Publicaciones</h4>
+                        <div class="row g-3">
+                            {% for post in recent_posts %}
+                            <div class="col-md-6">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title">{{ post.title }}</h6>
+                                        <p class="card-text small text-muted">{{ post.excerpt|truncatewords:15 }}</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar"></i> {{ post.created_at|date:"d M Y" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function subscribeEmail() {
+    // Aquí implementarías la suscripción por email
+    alert('Funcionalidad de email próximamente disponible. Por ahora puedes usar el RSS feed.');
+}
+</script>
+{% endblock %}

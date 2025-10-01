@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from PIL import Image
 import os
 
@@ -333,3 +334,46 @@ class Mention(models.Model):
     
     def __str__(self):
         return f"{self.comment.author.username} mencionó a {self.mentioned_user.username}"
+
+class Subscription(models.Model):
+    """Modelo para suscripciones de usuarios a autores o categorías"""
+    SUBSCRIPTION_TYPES = [
+        ('author', 'Autor'),
+        ('category', 'Categoría'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
+    subscription_type = models.CharField(max_length=10, choices=SUBSCRIPTION_TYPES)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscribers', null=True, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subscribers', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        unique_together = [
+            ('user', 'subscription_type', 'author'),
+            ('user', 'subscription_type', 'category'),
+        ]
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_active']),
+            models.Index(fields=['subscription_type', 'is_active']),
+        ]
+    
+    def __str__(self):
+        if self.subscription_type == 'author' and self.author:
+            return f"{self.user.username} suscrito a {self.author.username}"
+        elif self.subscription_type == 'category' and self.category:
+            return f"{self.user.username} suscrito a {self.category.name}"
+        return f"Suscripción de {self.user.username}"
+    
+    def clean(self):
+        """Validar que solo se especifique autor o categoría según el tipo"""
+        if self.subscription_type == 'author' and not self.author:
+            raise ValidationError('Debe especificar un autor para suscripciones de tipo autor')
+        if self.subscription_type == 'category' and not self.category:
+            raise ValidationError('Debe especificar una categoría para suscripciones de tipo categoría')
+        if self.subscription_type == 'author' and self.category:
+            raise ValidationError('No puede especificar categoría para suscripciones de tipo autor')
+        if self.subscription_type == 'category' and self.author:
+            raise ValidationError('No puede especificar autor para suscripciones de tipo categoría')

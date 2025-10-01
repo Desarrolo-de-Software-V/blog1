@@ -52,6 +52,11 @@
             color: rgba(255,255,255,0.9) !important;
             font-weight: 500;
             transition: color 0.3s ease;
+            white-space: nowrap;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .navbar-nav .nav-link:hover {
@@ -62,22 +67,189 @@
             color: var(--accent-color) !important;
         }
 
-        /* Search form */
-        .search-form {
-            max-width: 300px;
+        /* Mejorar el espaciado de la navegación */
+        .navbar-nav .nav-item {
+            margin: 0 0.25rem;
         }
 
-        .search-form .form-control {
-            border-radius: 25px;
+        /* Ajustar el texto para elementos largos */
+        .navbar-nav .nav-link i {
+            font-size: 0.9rem;
+            min-width: 16px;
+        }
+
+        /* Mejorar la apariencia de los spans de texto */
+        .navbar-nav .nav-link span {
+            font-size: inherit;
+            line-height: 1.2;
+        }
+
+        /* Asegurar que los elementos no se rompan */
+        .navbar-nav {
+            flex-wrap: nowrap;
+        }
+
+        /* Responsive adjustments para navegación */
+        @media (max-width: 1200px) {
+            .navbar-nav .nav-link {
+                font-size: 0.9rem;
+                padding: 0.5rem 0.75rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .navbar-nav .nav-link {
+                padding: 0.75rem 1rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Search container */
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Botón de búsqueda circular */
+        .search-toggle-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             border: none;
-            padding: 8px 20px;
+            background-color: white;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
-        .search-form .btn {
+        .search-toggle-btn:hover {
+            background-color: var(--accent-color);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .search-toggle-btn i {
+            font-size: 1rem;
+        }
+
+        /* Barra de búsqueda expandible */
+        .search-expandable {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            background: white;
             border-radius: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            min-width: 300px;
+            max-width: 500px;
+        }
+
+        .search-expandable.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .search-form-expanded {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .search-input-expanded {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px 15px;
+            font-size: 1rem;
+            outline: none;
+            color: var(--text-color);
+        }
+
+        .search-input-expanded::placeholder {
+            color: #999;
+        }
+
+        .search-submit-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
             border: none;
             background-color: var(--accent-color);
             color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: all 0.3s ease;
+        }
+
+        .search-submit-btn:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
+        }
+
+        .search-close-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background-color: transparent;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: all 0.3s ease;
+        }
+
+        .search-close-btn:hover {
+            background-color: #f8f9fa;
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        /* Overlay para cerrar búsqueda */
+        .search-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.1);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .search-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Responsive para búsqueda */
+        @media (max-width: 768px) {
+            .search-expandable {
+                position: fixed;
+                top: 80px;
+                left: 20px;
+                right: 20px;
+                transform: none;
+                min-width: auto;
+                max-width: none;
+            }
         }
 
         /* Main content */
@@ -295,40 +467,65 @@
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'blog:home' %}">
-                                <i class="fas fa-home"></i> Inicio
+                                <i class="fas fa-home"></i> 
+                                <span>Inicio</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'blog:post_list' %}">
-                                <i class="fas fa-list"></i> Todas las Reseñas
+                                <i class="fas fa-list"></i> 
+                                <span>Todas las Reseñas</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'blog:categories_list' %}">
-                                <i class="fas fa-tags"></i> Categorías
+                                <i class="fas fa-tags"></i> 
+                                <span>Categorías</span>
                             </a>
                         </li>
                         {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'blog:create_post' %}">
-                                <i class="fas fa-plus"></i> Escribir Reseña
+                                <i class="fas fa-plus"></i> 
+                                <span>Escribir Reseña</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'blog:user_posts' %}">
-                                <i class="fas fa-user-edit"></i> Mis Reseñas
+                                <i class="fas fa-user-edit"></i> 
+                                <span>Mis Reseñas</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'blog:my_subscriptions' %}">
+                                <i class="fas fa-bell"></i> 
+                                <span>Mis Suscripciones</span>
                             </a>
                         </li>
                         {% endif %}
                     </ul>
                     
                     <!-- Search form -->
-                    <form class="d-flex search-form me-3" method="get" action="{% url 'blog:search' %}">
-                        <input class="form-control me-2" type="search" name="query" placeholder="Buscar..." value="{{ request.GET.query }}">
-                        <button class="btn btn-outline-light" type="submit">
+                    <div class="search-container">
+                        <!-- Botón de búsqueda expandible -->
+                        <button class="search-toggle-btn" id="searchToggle" type="button">
                             <i class="fas fa-search"></i>
                         </button>
-                    </form>
+                        
+                        <!-- Barra de búsqueda expandible -->
+                        <div class="search-expandable" id="searchExpandable">
+                            <form class="d-flex search-form-expanded" method="get" action="{% url 'blog:search' %}">
+                                <input class="form-control search-input-expanded" type="search" name="query" 
+                                       placeholder="Buscar reseñas, películas, anime..." value="{{ request.GET.query }}">
+                                <button class="btn btn-primary search-submit-btn" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary search-close-btn" type="button" id="searchClose">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                     
                     <!-- User menu -->
                     <ul class="navbar-nav">
@@ -448,13 +645,16 @@
         .catch(error => console.error('Error updating notification count:', error));
     }
 
-    // Actualizar contador al cargar la página
-    document.addEventListener('DOMContentLoaded', function() {
-        updateNotificationCount();
-        
-        // Actualizar cada 30 segundos
-        setInterval(updateNotificationCount, 30000);
-    });
+     // Actualizar contador al cargar la página
+     document.addEventListener('DOMContentLoaded', function() {
+         updateNotificationCount();
+         
+         // Actualizar cada 30 segundos
+         setInterval(updateNotificationCount, 30000);
+         
+         // Funcionalidad de búsqueda expandible
+         initExpandableSearch();
+     });
     // Función para mostrar notificación toast
     function showNotificationToast(title, message, type = 'info') {
         const toast = document.createElement('div');
@@ -480,10 +680,89 @@
             setTimeout(() => toast.remove(), 300);
         }, 5000);
         
-        // Actualizar contador
-        updateNotificationCount();
-    }
-    </script>
+         // Actualizar contador
+         updateNotificationCount();
+     }
+
+     // Funcionalidad de búsqueda expandible
+     function initExpandableSearch() {
+         const searchToggle = document.getElementById('searchToggle');
+         const searchExpandable = document.getElementById('searchExpandable');
+         const searchClose = document.getElementById('searchClose');
+         const searchInput = document.querySelector('.search-input-expanded');
+         let searchOverlay = null;
+
+         if (!searchToggle || !searchExpandable) return;
+
+         // Crear overlay
+         function createOverlay() {
+             if (!searchOverlay) {
+                 searchOverlay = document.createElement('div');
+                 searchOverlay.className = 'search-overlay';
+                 document.body.appendChild(searchOverlay);
+             }
+         }
+
+         // Mostrar búsqueda expandible
+         function showSearch() {
+             createOverlay();
+             searchExpandable.classList.add('active');
+             searchOverlay.classList.add('active');
+             
+             // Enfocar el input después de la animación
+             setTimeout(() => {
+                 searchInput.focus();
+             }, 300);
+         }
+
+         // Ocultar búsqueda expandible
+         function hideSearch() {
+             searchExpandable.classList.remove('active');
+             if (searchOverlay) {
+                 searchOverlay.classList.remove('active');
+             }
+         }
+
+         // Event listeners
+         searchToggle.addEventListener('click', function(e) {
+             e.stopPropagation();
+             showSearch();
+         });
+
+         searchClose.addEventListener('click', function(e) {
+             e.stopPropagation();
+             hideSearch();
+         });
+
+         // Cerrar al hacer clic en el overlay
+         if (searchOverlay) {
+             searchOverlay.addEventListener('click', hideSearch);
+         }
+
+         // Cerrar con tecla Escape
+         document.addEventListener('keydown', function(e) {
+             if (e.key === 'Escape' && searchExpandable.classList.contains('active')) {
+                 hideSearch();
+             }
+         });
+
+         // Prevenir que se cierre al hacer clic dentro de la barra de búsqueda
+         searchExpandable.addEventListener('click', function(e) {
+             e.stopPropagation();
+         });
+
+         // Buscar al presionar Enter
+         searchInput.addEventListener('keydown', function(e) {
+             if (e.key === 'Enter') {
+                 e.preventDefault();
+                 const form = searchInput.closest('form');
+                 if (form) {
+                     form.submit();
+                 }
+             }
+         });
+     }
+     </script>
     {% endif %}
     
     <style>

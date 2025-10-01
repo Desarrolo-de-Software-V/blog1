@@ -1,0 +1,29 @@
+Nueva reseña - MovieReviews
+
+¡Hola {{ user.first_name|default:user.username }}!
+
+Te notificamos porque estás suscrito a {{ subscription_context }}.
+
+NUEVA RESEÑA:
+==============
+
+Título: {{ post.title }}
+Película: {{ post.movie_title }}
+Autor: {{ post.author.get_full_name|default:post.author.username }}
+Fecha: {{ post.created_at|date:"d M Y" }}
+Categoría: {{ post.category.name }}
+Puntuación: {{ post.rating_stars }}
+
+Resumen:
+{{ post.excerpt }}
+
+Leer reseña completa: {{ site_url }}{{ post.get_absolute_url }}
+
+¡Esperamos que disfrutes de esta nueva reseña!
+
+---
+MovieReviews
+Tu blog favorito para reseñas de películas y anime
+
+Gestionar suscripciones: {{ site_url }}/my-subscriptions/
+Visitar sitio: {{ site_url }}

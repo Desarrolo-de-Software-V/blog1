@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ subcategory.name }} - {{ category.name }} - MovieReviews{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Subcategory Header -->
+    <div class="subcategory-header mb-5">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'blog:home' %}" class="text-decoration-none">
+                                <i class="fas fa-home"></i> Inicio
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'blog:categories_list' %}" class="text-decoration-none">
+                                Categorías
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'blog:category_posts' category.slug %}" class="text-decoration-none">
+                                {{ category.name }}
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            {{ subcategory.name }}
+                        </li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-4 fw-bold text-primary mb-3">
+                    <i class="fas fa-tag text-warning"></i>
+                    {{ subcategory.name }}
+                </h1>
+                
+                <p class="lead text-muted mb-3">
+                    Subcategoría de <strong>{{ category.name }}</strong>
+                </p>
+                
+                {% if subcategory.description %}
+                <p class="text-muted mb-3">{{ subcategory.description }}</p>
+                {% endif %}
+                
+                <div class="subcategory-stats">
+                    <span class="badge bg-primary fs-6 me-2">
+                        <i class="fas fa-file-alt"></i>
+                        {{ posts.paginator.count }} reseña{{ posts.paginator.count|pluralize }}
+                    </span>
+                    <span class="badge bg-success fs-6">
+                        <i class="fas fa-folder"></i>
+                        Subcategoría
+                    </span>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 text-center">
+                <!-- Subscription widget -->
+                {% if user.is_authenticated %}
+                <div class="mt-3">
+                    {% csrf_token %}
+                    {% include 'blog/components/subscription_widget.html' with subscription_type='category' category=category %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Buscar en {{ subcategory.name }}</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ request.GET.search }}" placeholder="Título, película, director...">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="rating" class="form-label">Puntuación</label>
+                            <select class="form-select" id="rating" name="rating">
+                                <option value="">Todas</option>
+                                <option value="5" {% if request.GET.rating == '5' %}selected{% endif %}>5 estrellas</option>
+                                <option value="4" {% if request.GET.rating == '4' %}selected{% endif %}>4 estrellas</option>
+                                <option value="3" {% if request.GET.rating == '3' %}selected{% endif %}>3 estrellas</option>
+                                <option value="2" {% if request.GET.rating == '2' %}selected{% endif %}>2 estrellas</option>
+                                <option value="1" {% if request.GET.rating == '1' %}selected{% endif %}>1 estrella</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="sort" class="form-label">Ordenar por</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Más recientes</option>
+                                <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Más antiguos</option>
+                                <option value="-rating" {% if request.GET.sort == '-rating' %}selected{% endif %}>Mejor calificadas</option>
+                                <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>Menor calificadas</option>
+                                <option value="title" {% if request.GET.sort == 'title' %}selected{% endif %}>Título A-Z</option>
+                                <option value="-title" {% if request.GET.sort == '-title' %}selected{% endif %}>Título Z-A</option>
+                                <option value="-release_year" {% if request.GET.sort == '-release_year' %}selected{% endif %}>Año más reciente</option>
+                                <option value="release_year" {% if request.GET.sort == 'release_year' %}selected{% endif %}>Año más antiguo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="btn-group w-100" role="group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter"></i> Filtrar
+                                </button>
+                                <a href="{% url 'blog:subcategory_posts' category.slug subcategory.slug %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Posts Grid -->
+    {% if posts %}
+    <div class="row">
+        {% for post in posts %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 hover-lift">
+                {% if post.featured_image %}
+                <img src="{{ post.featured_image.url }}" class="card-img-top" alt="{{ post.title }}" 
+                     style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                     style="height: 200px;">
+                    <i class="fas fa-film fa-3x text-muted"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-primary">{{ post.category.name }}</span>
+                        {% if post.featured %}
+                        <span class="badge bg-warning">Destacado</span>
+                        {% endif %}
+                    </div>
+                    
+                    <h5 class="card-title">{{ post.title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ post.movie_title }}</h6>
+                    
+                    <p class="card-text text-muted flex-grow-1">
+                        {{ post.excerpt|truncatewords:20 }}
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <div class="rating">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= post.rating %}
+                                    <i class="fas fa-star text-warning"></i>
+                                {% else %}
+                                    <i class="far fa-star text-muted"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <small class="text-muted">{{ post.created_at|date:"d M Y" }}</small>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{{ post.get_absolute_url }}" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-eye"></i> Ver Reseña
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Paginación de reseñas">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.rating %}&rating={{ request.GET.rating }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">Primera</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.rating %}&rating={{ request.GET.rating }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">Anterior</a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.rating %}&rating={{ request.GET.rating }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">Siguiente</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.rating %}&rating={{ request.GET.rating }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">Última</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty state for subcategory -->
+    <div class="text-center py-5">
+        <div class="empty-subcategory-state">
+            <i class="fas fa-folder-open fa-5x text-muted mb-4"></i>
+            <h3 class="text-muted mb-3">
+                No hay reseñas en {{ subcategory.name }}
+            </h3>
+            <p class="text-muted mb-4">
+                Esta subcategoría aún no tiene reseñas publicadas. 
+                <br>
+                ¡Sé el primero en crear una reseña para esta subcategoría!
+            </p>
+            
+            <div class="d-flex justify-content-center gap-3">
+                {% if user.is_authenticated %}
+                <a href="{% url 'blog:create_post' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus"></i> Crear Primera Reseña
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'blog:category_posts' category.slug %}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-arrow-left"></i> Volver a {{ category.name }}
+                </a>
+                
+                <a href="{% url 'blog:post_list' %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-search"></i> Explorar Otras Reseñas
+                </a>
+            </div>
+            
+            <!-- Related subcategories -->
+            <div class="mt-5">
+                <h5 class="text-muted mb-3">Otras subcategorías de {{ category.name }}:</h5>
+                <div class="row justify-content-center">
+                    {% for other_subcat in category.subcategories.all %}
+                        {% if other_subcat.slug != subcategory.slug %}
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <a href="{% url 'blog:subcategory_posts' category.slug other_subcat.slug %}" 
+                               class="btn btn-outline-primary btn-sm w-100">
+                                <i class="fas fa-tag"></i> {{ other_subcat.name }}
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.empty-subcategory-state {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.subcategory-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid #dee2e6;
+}
+
+.subcategory-stats .badge {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+}
+</style>
+{% endblock %}

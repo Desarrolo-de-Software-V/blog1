@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - MovieReviews{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-5 fw-bold text-primary mb-2">
+                        <i class="fas fa-user-circle"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="lead text-muted">
+                        {% if is_own_posts %}
+                            Gestiona y revisa todas tus reseñas publicadas
+                        {% else %}
+                            Explora todas las reseñas publicadas por {{ author.get_full_name|default:author.username }}
+                        {% endif %}
+                    </p>
+                </div>
+                {% if is_own_posts %}
+                <div>
+                    <a href="{% url 'blog:create_post' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus"></i> Nueva Reseña
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-alt fs-1 mb-2"></i>
+                    <h4>{{ posts.paginator.count }}</h4>
+                    <small>Reseñas Totales</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-eye fs-1 mb-2"></i>
+                    <h4>{{ posts|length }}</h4>
+                    <small>Publicadas</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-star fs-1 mb-2"></i>
+                    <h4>{{ posts|length }}</h4>
+                    <small>Destacadas</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-comments fs-1 mb-2"></i>
+                    <h4>{{ posts|length }}</h4>
+                    <small>Comentarios</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Buscar</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ request.GET.search }}" placeholder="Buscar en título o película...">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Estado</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">Todos</option>
+                                <option value="published" {% if request.GET.status == 'published' %}selected{% endif %}>Publicadas</option>
+                                <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Borradores</option>
+                                <option value="featured" {% if request.GET.status == 'featured' %}selected{% endif %}>Destacadas</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="order" class="form-label">Ordenar por</label>
+                            <select class="form-select" id="order" name="order">
+                                <option value="-created_at" {% if request.GET.order == '-created_at' %}selected{% endif %}>Más recientes</option>
+                                <option value="created_at" {% if request.GET.order == 'created_at' %}selected{% endif %}>Más antiguos</option>
+                                <option value="title" {% if request.GET.order == 'title' %}selected{% endif %}>Título A-Z</option>
+                                <option value="-title" {% if request.GET.order == '-title' %}selected{% endif %}>Título Z-A</option>
+                                <option value="-rating" {% if request.GET.order == '-rating' %}selected{% endif %}>Mejor calificadas</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Filtrar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Posts Grid -->
+    {% if posts %}
+    <div class="row">
+        {% for post in posts %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 hover-lift">
+                {% if post.featured_image %}
+                <img src="{{ post.featured_image.url }}" class="card-img-top" alt="{{ post.title }}" 
+                     style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                     style="height: 200px;">
+                    <i class="fas fa-film fa-3x text-muted"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-primary">{{ post.category.name }}</span>
+                        {% if post.featured %}
+                        <span class="badge bg-warning">Destacado</span>
+                        {% endif %}
+                    </div>
+                    
+                    <h5 class="card-title">{{ post.title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ post.movie_title }}</h6>
+                    
+                    <p class="card-text text-muted flex-grow-1">
+                        {{ post.excerpt|truncatewords:20 }}
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <div class="rating">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= post.rating %}
+                                    <i class="fas fa-star text-warning"></i>
+                                {% else %}
+                                    <i class="far fa-star text-muted"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <small class="text-muted">{{ post.created_at|date:"d M Y" }}</small>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{{ post.get_absolute_url }}" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-eye"></i> Ver Reseña
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Paginación de reseñas">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">Primera</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">Anterior</a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">Siguiente</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">Última</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty state -->
+    <div class="text-center py-5">
+        <i class="fas fa-film fa-5x text-muted mb-4"></i>
+        <h3 class="text-muted">
+            {% if is_own_posts %}
+                No tienes reseñas publicadas
+            {% else %}
+                {{ author.get_full_name|default:author.username }} no tiene reseñas publicadas
+            {% endif %}
+        </h3>
+        <p class="text-muted mb-4">
+            {% if is_own_posts %}
+                Comienza creando tu primera reseña
+            {% else %}
+                Este autor aún no ha publicado ninguna reseña
+            {% endif %}
+        </p>
+        {% if is_own_posts %}
+        <a href="{% url 'blog:create_post' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus"></i> Crear Primera Reseña
+        </a>
+        {% else %}
+        <a href="{% url 'blog:post_list' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-search"></i> Explorar Otras Reseñas
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

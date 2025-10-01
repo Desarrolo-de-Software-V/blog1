@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>{{ feed_title }} - MovieReviews</title>
+        <link>{{ request.scheme }}://{{ request.get_host }}</link>
+        <description>{{ feed_description }}</description>
+        <language>es</language>
+        {% if posts %}
+        <lastBuildDate>{{ posts.0.created_at|date:"r" }}</lastBuildDate>
+        {% else %}
+        <lastBuildDate>{{ "now"|date:"r" }}</lastBuildDate>
+        {% endif %}
+        <atom:link href="{{ request.build_absolute_uri }}" rel="self" type="application/rss+xml"/>
+        
+        {% for post in posts %}
+        <item>
+            <title>{{ post.title }}</title>
+            <link>{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}</link>
+            <description>
+                <![CDATA[
+                <h3>{{ post.movie_title }}</h3>
+                <p><strong>Autor:</strong> {{ post.author.get_full_name|default:post.author.username }}</p>
+                <p><strong>Categoría:</strong> {{ post.category.name }}</p>
+                <p><strong>Puntuación:</strong> {{ post.rating_stars }}</p>
+                <p><strong>Fecha:</strong> {{ post.created_at|date:"d M Y" }}</p>
+                <p>{{ post.excerpt }}</p>
+                {% if post.featured_image %}
+                <img src="{{ request.scheme }}://{{ request.get_host }}{{ post.featured_image.url }}" alt="{{ post.title }}" style="max-width: 300px;">
+                {% endif %}
+                ]]>
+            </description>
+            <pubDate>{{ post.created_at|date:"r" }}</pubDate>
+            <guid>{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}</guid>
+            <category>{{ post.category.name }}</category>
+            {% if post.subcategory %}
+            <category>{{ post.subcategory.name }}</category>
+            {% endif %}
+        </item>
+        {% endfor %}
+    </channel>
+</rss>

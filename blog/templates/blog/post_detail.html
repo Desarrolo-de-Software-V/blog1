@@ -38,6 +38,69 @@
     margin-bottom: 20px;
 }
 
+.post-meta-badges {
+    margin-top: 20px;
+}
+
+.post-meta-badges .badge {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.post-meta-badges .badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.post-meta-badges .badge.bg-primary:hover {
+    background-color: #0056b3 !important;
+}
+
+.post-meta-badges .badge.bg-success:hover {
+    background-color: #28a745 !important;
+}
+
+/* Estilos para el badge del autor clickeable */
+.author-badge {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.author-badge:hover {
+    background-color: #007bff !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+}
+
+.author-badge:hover i {
+    color: white !important;
+}
+
+/* Estilos para el enlace del nombre del autor en el sidebar */
+.author-name-link {
+    color: #2c3e50;
+    transition: all 0.3s ease;
+}
+
+.author-name-link:hover {
+    color: #007bff !important;
+    text-shadow: 0 0 8px rgba(0,123,255,0.3);
+    transform: scale(1.05);
+}
+
+/* Estilos para enlaces de autores en comentarios */
+.comment-author-link {
+    color: #2c3e50;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.comment-author-link:hover {
+    color: #007bff !important;
+    text-shadow: 0 0 5px rgba(0,123,255,0.2);
+}
+
 .comment-form {
     background-color: #f8f9fa;
     padding: 30px;
@@ -87,6 +150,74 @@
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
+
+.comment-filter .dropdown-toggle {
+    border-radius: 25px;
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.comment-filter .dropdown-toggle:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.comment-filter .dropdown-menu {
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    border: none;
+    padding: 10px 0;
+}
+
+.comment-filter .dropdown-item {
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    border-radius: 0;
+}
+
+.comment-filter .dropdown-item:hover {
+    background-color: var(--light-bg);
+    color: var(--primary-color);
+}
+
+.comment-filter .dropdown-item.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.comment-filter .dropdown-item i {
+    width: 20px;
+    margin-right: 10px;
+}
+
+/* Transición suave para el scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Mejorar la experiencia de scroll */
+body {
+    scroll-behavior: smooth;
+}
+
+/* Estado de carga del filtro */
+.filter-loading {
+    cursor: wait;
+}
+
+.filter-loading .comment-filter .dropdown-toggle {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Mejorar la transición de scroll */
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
 </style>
 {% endblock %}
 
@@ -115,23 +246,36 @@
                 <h1 class="display-5 fw-bold mb-3">{{ post.title }}</h1>
                 <h2 class="h4 text-white-50 mb-4">{{ post.movie_title }}</h2>
                 
-                <div class="d-flex flex-wrap align-items-center gap-3">
-                    <span class="badge bg-light text-dark fs-6 px-3 py-2">
-                        <i class="fas fa-user"></i>
-                        {{ post.author.first_name|default:post.author.username }}
-                    </span>
-                    <span class="badge bg-light text-dark fs-6 px-3 py-2">
-                        <i class="fas fa-calendar"></i>
-                        {{ post.created_at|date:"d M Y" }}
-                    </span>
-                    <span class="badge bg-light text-dark fs-6 px-3 py-2">
-                        <i class="fas fa-comments"></i>
-                        {{ comments.count }} comentario{{ comments.count|pluralize }}
-                    </span>
-                    <span class="badge bg-light text-dark fs-6 px-3 py-2">
-                        <i class="fas fa-clock"></i>
-                        {{ post.content|reading_time }}
-                    </span>
+                <!-- Meta badges organized in rows -->
+                <div class="post-meta-badges">
+                    <!-- First row: Author and Date -->
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
+                        <a href="{% url 'blog:author_posts' post.author.id %}" 
+                           class="badge bg-light text-dark fs-6 px-3 py-2 text-decoration-none author-badge">
+                            <i class="fas fa-user"></i>
+                            {{ post.author.first_name|default:post.author.username }}
+                        </a>
+                        <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                            <i class="fas fa-calendar"></i>
+                            {{ post.created_at|date:"d M Y" }}
+                        </span>
+                    </div>
+                    
+                    <!-- Second row: Category, Comments, and Reading time -->
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <a href="{{ post.category.get_absolute_url }}" class="badge bg-primary text-white fs-6 px-3 py-2 text-decoration-none">
+                            <i class="fas fa-tag"></i>
+                            {{ post.category.name }}
+                        </a>
+                        <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                            <i class="fas fa-comments"></i>
+                            {{ comments.count }} comentario{{ comments.count|pluralize }}
+                        </span>
+                        <span class="badge bg-success text-white fs-6 px-3 py-2">
+                            <i class="fas fa-clock"></i>
+                            {{ post.content|reading_time }}
+                        </span>
+                    </div>
                 </div>
             </div>
             
@@ -224,10 +368,68 @@
 
             <!-- Comments section -->
             <div class="comments-section mt-5">
-                <h3 class="mb-4">
-                    <i class="fas fa-comments"></i>
-                    Comentarios ({{ comments.count }})
-                </h3>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="mb-0">
+                        <i class="fas fa-comments"></i>
+                        Comentarios ({{ comments.count }})
+                    </h3>
+                    
+                    <!-- Comment filter dropdown -->
+                    <div class="comment-filter">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" 
+                                    id="commentFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-sort"></i>
+                                {% if comment_filter == 'newest' %}
+                                    Más nuevos
+                                {% elif comment_filter == 'oldest' %}
+                                    Más antiguos
+                                {% elif comment_filter == 'most_liked' %}
+                                    Más votados
+                                {% elif comment_filter == 'least_liked' %}
+                                    Menos votados
+                                {% elif comment_filter == 'most_upvotes' %}
+                                    Más upvotes
+                                {% else %}
+                                    Más nuevos
+                                {% endif %}
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="commentFilterDropdown">
+                                <li>
+                                    <a class="dropdown-item {% if comment_filter == 'newest' %}active{% endif %}" 
+                                       href="?comment_filter=newest">
+                                        <i class="fas fa-clock"></i> Más nuevos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item {% if comment_filter == 'oldest' %}active{% endif %}" 
+                                       href="?comment_filter=oldest">
+                                        <i class="fas fa-history"></i> Más antiguos
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item {% if comment_filter == 'most_liked' %}active{% endif %}" 
+                                       href="?comment_filter=most_liked">
+                                        <i class="fas fa-thumbs-up"></i> Más votados
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item {% if comment_filter == 'least_liked' %}active{% endif %}" 
+                                       href="?comment_filter=least_liked">
+                                        <i class="fas fa-thumbs-down"></i> Menos votados
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item {% if comment_filter == 'most_upvotes' %}active{% endif %}" 
+                                       href="?comment_filter=most_upvotes">
+                                        <i class="fas fa-arrow-up"></i> Más upvotes
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Comment form -->
                 {% if user.is_authenticated %}
@@ -262,7 +464,10 @@
                         <div class="comment-content-main flex-grow-1">
                             <div class="comment-author">
                                 <i class="fas fa-user-circle"></i>
-                                {{ comment_data.comment.author.first_name|default:comment_data.comment.author.username }}
+                                <a href="{% url 'blog:author_posts' comment_data.comment.author.id %}" 
+                                   class="text-decoration-none comment-author-link">
+                                    {{ comment_data.comment.author.first_name|default:comment_data.comment.author.username }}
+                                </a>
                             </div>
                             <div class="comment-date mb-2">
                                 <i class="fas fa-clock"></i>
@@ -309,7 +514,10 @@
                             <div class="comment-content-main flex-grow-1">
                                 <div class="comment-author">
                                     <i class="fas fa-reply"></i>
-                                    {{ reply.author.first_name|default:reply.author.username }}
+                                    <a href="{% url 'blog:author_posts' reply.author.id %}" 
+                                       class="text-decoration-none comment-author-link">
+                                        {{ reply.author.first_name|default:reply.author.username }}
+                                    </a>
                                 </div>
                                 <div class="comment-date mb-2">
                                     <i class="fas fa-clock"></i>
@@ -390,7 +598,12 @@
                 <div class="card-body text-center">
                     <i class="fas fa-user-circle fs-1 text-primary mb-3"></i>
                     <h6>Escrito por</h6>
-                    <h5>{{ post.author.first_name|default:post.author.username }}</h5>
+                    <h5>
+                        <a href="{% url 'blog:author_posts' post.author.id %}" 
+                           class="text-decoration-none author-name-link">
+                            {{ post.author.first_name|default:post.author.username }}
+                        </a>
+                    </h5>
                     {% if post.author.first_name and post.author.last_name %}
                     <p class="text-muted">{{ post.author.first_name }} {{ post.author.last_name }}</p>
                     {% endif %}
@@ -398,9 +611,100 @@
                         <i class="fas fa-calendar"></i>
                         Miembro desde {{ post.author.date_joined|date:"M Y" }}
                     </small>
+                    
+                    <!-- Subscription widget -->
+                    {% if user.is_authenticated and user != post.author %}
+                    <div class="mt-3">
+                        {% csrf_token %}
+                        {% include 'blog/components/subscription_widget.html' with subscription_type='author' author=post.author %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Restaurar posición de scroll si existe
+    const savedScrollPosition = sessionStorage.getItem('commentFilterScrollPosition');
+    if (savedScrollPosition) {
+        // Usar requestAnimationFrame para asegurar que el DOM esté completamente cargado
+        requestAnimationFrame(() => {
+            // Scroll suave a la posición guardada
+            window.scrollTo({
+                top: parseInt(savedScrollPosition),
+                behavior: 'smooth'
+            });
+            sessionStorage.removeItem('commentFilterScrollPosition');
+        });
+    }
+    
+    // Manejar el filtro de comentarios
+    const filterDropdown = document.getElementById('commentFilterDropdown');
+    const filterItems = document.querySelectorAll('.comment-filter .dropdown-item');
+    
+    // Agregar efecto de carga al cambiar filtro
+    filterItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            // Guardar la posición actual del scroll
+            const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            sessionStorage.setItem('commentFilterScrollPosition', currentScrollPosition.toString());
+            
+            // Mostrar indicador de carga más visible
+            const originalText = filterDropdown.innerHTML;
+            filterDropdown.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando filtro...';
+            filterDropdown.disabled = true;
+            filterDropdown.classList.add('btn-primary');
+            filterDropdown.classList.remove('btn-outline-secondary');
+            
+            // Agregar clase para indicar que está cargando
+            document.body.classList.add('filter-loading');
+            
+            // Después de un breve delay, permitir que la página se recargue
+            setTimeout(() => {
+                filterDropdown.innerHTML = originalText;
+                filterDropdown.disabled = false;
+                filterDropdown.classList.remove('btn-primary');
+                filterDropdown.classList.add('btn-outline-secondary');
+                document.body.classList.remove('filter-loading');
+            }, 1000);
+        });
+    });
+    
+    // Agregar animación suave a los comentarios
+    const comments = document.querySelectorAll('.comment-item');
+    comments.forEach((comment, index) => {
+        comment.style.opacity = '0';
+        comment.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            comment.style.transition = 'all 0.5s ease';
+            comment.style.opacity = '1';
+            comment.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Mejorar la experiencia de votación
+    const voteButtons = document.querySelectorAll('.vote-btn');
+    voteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            if (!this.disabled) {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 150);
+            }
+        });
+    });
+    
+    // Limpiar posición guardada al salir de la página
+    window.addEventListener('beforeunload', function() {
+        sessionStorage.removeItem('commentFilterScrollPosition');
+    });
+});
+</script>
 {% endblock %}
